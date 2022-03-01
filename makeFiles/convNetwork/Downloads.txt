@@ -1,0 +1,20 @@
+Installing ImageMagick: 
+$ sudo apt update 
+$ sudo apt-get install build-essential
+
+$ wget https://www.imagemagick.org/download/ImageMagick.tar.gz
+$ tar xvzf ImageMagick.tar.gz
+
+$ cd ImageMagick-7.0.8-26/
+To run configuration and to compile
+
+$./configure 
+$ make
+$ sudo make install 
+To create link,
+
+$ sudo ldconfig /usr/local/lib
+Check version
+
+$ magick -version
+Thanks to Aaron Kili, Author of the below article.

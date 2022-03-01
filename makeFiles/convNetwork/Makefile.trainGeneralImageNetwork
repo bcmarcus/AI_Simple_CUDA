@@ -1,0 +1,18 @@
+# Makefile
+CC=g++
+CFLAGS=-O2 -std=c++17 -I ../../ `Magick++-config --cxxflags --cppflags --ldflags --libs`
+
+all: trainGeneralImageNetwork
+
+clean:
+	rm -rf trainGeneralImageNetwork
+
+ODIR=obj
+
+_OBJ = xor.o
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+
+trainGeneralImageNetwork: 
+	$(CC) -o $@ ../../artificialIntelligence/neuralNetworks/trainGeneralImageNetwork.cpp $(CFLAGS)
+
+.PHONY: clean
