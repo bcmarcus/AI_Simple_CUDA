@@ -1,65 +1,80 @@
 CC = gcc
 CCPP = g++
-NVCC = /usr/bin/nvcc
+NVCC = /usr/local/cuda-11.6/bin/nvcc
 
 INCLUDE = ../../../
 DEFINES = -DUSE_ZLIB
 
 OPTFLAGS = -O2 -std=c++2a -Wall
 
-#-x c++ -Wno-deprecated-gpu-targets -ccbin g++
-NVFLAGS = -I $(INCLUDE) -Xcompiler -O2 -L /usr/local/cuda-11.6/lib64 -lcuda -lstdc++
-NVLINKFLAGS = -L /usr/local/cuda-11.6/lib64 -lcuda -lcudart
+NVFLAGS = -I $(INCLUDE) -Xcompiler -O2 -L/usr/local/cuda-11.6/lib64 -lcuda -lstdc++ -lcudart -dc -arch=sm_50 --std=c++17
+NVLINKFLAGS = -L/usr/local/cuda-11.6/lib64 -lcuda -lcudart
 #-lstdc++
 
-CPPFLAGS = $(OPTFLAGS) -I $(INCLUDE) $(DEFINES) -L /usr/local/cuda-11.6/lib64 -lcuda -lcudart
+CPPFLAGS = $(OPTFLAGS) -I $(INCLUDE) $(DEFINES)
 LINKFLAGS = -lz 
 
 MAGICKLINKFLAGS = `Magick++-config --ldflags --libs`
 
-objs = src/trainGeneralImageNetwork.o \
-	src/generationalAIBasic.o \
+# objs = src/generationalAIBasic.o \
+# 	src/BasicLayerList.o \
+# 	src/BasicLayer.o \
+# 	src/BasicWeight.o \
+# 	src/activationFunctions.o 
+
+NVCCOBJS = src/generationalAIBasic.o \
+	src/cudaErrors.o \
 	src/BasicLayerList.o \
 	src/BasicLayer.o \
 	src/BasicWeight.o \
-	src/generateInput.o \
 	src/activationFunctions.o \
-	src/simpleMath.o
+	src/Matrix3D.o
 
-all: program
+CPPOBJS = src/simpleMath.o \
+	src/time.o \
+	src/trainGeneralImageNetwork.o \
+	src/generateInput.o
 
-program: $(objs)
+all: linkCPU
+
+linkCPU: $(CPPOBJS) $(NVCCOBJS) src/gpuCode.o
 	$(CCPP) $(CPPFLAGS) -o trainGeneralImageNetwork.out  $^ $(LINKFLAGS) $(NVLINKFLAGS) $(MAGICKLINKFLAGS)
+
+src/gpuCode.o: $(NVCCOBJS)
+	$(NVCC) --device-link -arch=sm_50 -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
 
 src/simpleMath.o: $(INCLUDE)coreutils/functions/math/simpleMath.cpp 
 	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-src/activationFunctions.o: $(INCLUDE)artificialIntelligence/functions/activationFunctions.cpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cpp
+src/time.o: $(INCLUDE)coreutils/util/time.cpp 
 	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-src/generateInput.o: $(INCLUDE)artificialIntelligence/functions/images/generateInput.cpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cpp
+src/generateInput.o: $(INCLUDE)artificialIntelligence/functions/images/generateInput.cpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@ `Magick++-config --cxxflags --cppflags`
 
-src/BasicWeight.o: $(INCLUDE)artificialIntelligence/classes/BasicWeight.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cpp
+src/cudaErrors.o: $(INCLUDE)coreutils/util/cudaErrors.cu $(INCLUDE)coreutils/util/cudaErrors.cuh 
+	$(NVCC) $(NVFLAGS) $< -o $@
+
+src/Matrix3D.o: $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cu
+	$(NVCC) $(NVFLAGS) $< -o $@
+
+src/activationFunctions.o: $(INCLUDE)artificialIntelligence/functions/activationFunctions.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+	$(NVCC) $(NVFLAGS) $< -o $@
+
+src/BasicWeight.o: $(INCLUDE)artificialIntelligence/classes/BasicWeight.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+	$(NVCC) $(NVFLAGS) $< -o $@
+
+src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/BasicLayer.cu $(INCLUDE)artificialIntelligence/classes/BasicWeight.cuh $(INCLUDE)artificialIntelligence/functions/activationFunctions.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+	$(NVCC) $(NVFLAGS) $< -o $@
+
+src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+	$(NVCC) $(NVFLAGS) $< -o $@
+
+src/generationalAIBasic.o: $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu  $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/classes/BasicLayer.cuh $(INCLUDE)artificialIntelligence/functions/activationFunctions.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh 
 	$(NVCC) $(NVFLAGS) -c $< -o $@
 
-src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/BasicLayer.cu $(INCLUDE)artificialIntelligence/classes/BasicWeight.hpp $(INCLUDE)artificialIntelligence/functions/activationFunctions.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cpp
-	$(NVCC) $(NVFLAGS) -c $< -o $@
-
-src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/BasicLayer.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cpp
-	$(NVCC) $(NVFLAGS) -c $< -o $@
-
-src/generationalAIBasic.o: $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu  $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/classes/BasicLayer.hpp $(INCLUDE)artificialIntelligence/functions/activationFunctions.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cpp 
-	$(NVCC) $(NVFLAGS) -c $< -o $@
-
-src/trainGeneralImageNetwork.o : $(INCLUDE)artificialIntelligence/neuralNetworks/trainGeneralImageNetwork.cpp  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cpp
-	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
-#trainGeneralImageNetwork: objects.o
-#	$(CCPP) -c --std=c++2a -I ../../../ `Magick++-config --cxxflags --cppflags` `Magick++-config --ldflags --libs` ../../../artificialIntelligence/functions/activationFunctions.cpp ../../../artificialIntelligence/functions/images/generateInput.cpp ../../../artificialIntelligence/neuralNetworks/trainGeneralImageNetwork.cpp
-
-#objects.o:
-#	$(NVCC) -c ../../../artificialIntelligence/classes/BasicWeight.cu ../../../artificialIntelligence/classes/BasicLayer.cu ../../../artificialIntelligence/classes/BasicLayerList.cu ../../../artificialIntelligence/basicLearningTypes/generationalAIBasic.cu -I ../../../ -L /usr/local/cuda/lib64 -lcuda -lstdc++
+src/trainGeneralImageNetwork.o : $(INCLUDE)artificialIntelligence/neuralNetworks/trainGeneralImageNetwork.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+	$(NVCC) $(NVFLAGS) $< -o $@
 
 clean: 
-	rm -f src/*.o program
+	rm -f src/*.o trainGeneralImageNetwork.out
