@@ -1,7 +1,7 @@
 #ifndef BASIC_3D_WEIGHT_LIST_HPP
 #define BASIC_3D_WEIGHT_LIST_HPP
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <artificialIntelligence/classes/BasicWeight.hpp>
 
 using namespace coreutils::classes::matrixes;

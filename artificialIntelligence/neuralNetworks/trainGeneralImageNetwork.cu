@@ -1,4 +1,6 @@
 //    ./trainGeneralImageNetwork -t RGB -d /../data/images/dataset/dataset -a /../data/images/dataset/animalAnswerFile.txt -o /../data/images/dataset/animalTrainedModel1.csv -h 5 -w 5
+//    ./trainGeneralImageNetwork -t RGB -d /../data/mnist_png/mnist_png/smallTesting -a /../data/mnist_png/mnist_png/indexToAnswerFile.txt -o /../data/mnist_png/mnist_png/mnistTrainedModel1.csv -h 5 -w 5
+
 
 #include <string>
 #include <iostream>
@@ -7,11 +9,12 @@
 #include <getopt.h>
 #include <map>
 #include <sys/resource.h>
+#include <vector>
 
 #include <artificialIntelligence/functions/images/generateInput.hpp>
 #include <artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp>
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 
 using namespace std;
 using namespace artificialIntelligence::functions;

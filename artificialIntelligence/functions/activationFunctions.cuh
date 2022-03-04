@@ -1,7 +1,7 @@
-#ifndef ACTIVATION_FUNCTIONS_HPP
-#define ACTIVATION_FUNCTIONS_HPP
+#ifndef ACTIVATION_FUNCTIONS_CUH
+#define ACTIVATION_FUNCTIONS_CUH
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 
 using namespace coreutils::classes::matrixes;
 
@@ -16,7 +16,7 @@ namespace artificialIntelligence {
 
          // sigmoid function for entire matrix
          
-         Matrix3D* sigmoid (Matrix3D* m3d);
+         Matrix3D* sigmoid (Matrix3D* m3d, bool returnNew);
 
          // derivative of the sigmoid function for entire matrix
          
@@ -35,6 +35,14 @@ namespace artificialIntelligence {
          // derivative of the tanh function for entire matrix
          
          Matrix3D* dTanh (Matrix3D* m3d);
+
+			__device__ double device_sigmoid(double x);
+
+			__device__ double device_dSigmoid(double x);
+
+			__device__ double device_tanh(double x);
+
+			__device__ double device_dTanh(double x);
       }
    }
 }

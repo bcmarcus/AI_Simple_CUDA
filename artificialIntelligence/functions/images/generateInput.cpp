@@ -1,7 +1,7 @@
 #include <Magick++.h> 
 
 #include <artificialIntelligence/functions/images/generateInput.hpp>
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 
 using namespace Magick;
 using namespace coreutils::classes::matrixes;

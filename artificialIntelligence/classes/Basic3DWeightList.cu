@@ -1,7 +1,7 @@
 #include <artificialIntelligence/classes/Basic3DWeightList.hpp>
 #include <artificialIntelligence/classes/BasicWeight.hpp>
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 
 using namespace artificialIntelligence::classes;
 

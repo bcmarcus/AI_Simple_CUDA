@@ -1,28 +1,34 @@
 #include <iostream>
 #include <string>
+#include <cmath>
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 
-#include <artificialIntelligence/classes/BasicWeight.hpp>
+#include <artificialIntelligence/classes/BasicWeight.cuh>
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
 
+#define BASIC_WEIGHT_MAX_SIZE 1024*1024*256
 
-BasicWeight::BasicWeight (Matrix3D* weights){
-   this->weights = weights;
-   this->right = nullptr;
-   this->back = nullptr;
-   this->down = nullptr;
-}
-
+// #define BASIC_WEIGHT_MAX_SIZE 1024 * 256 * 256
 
 BasicWeight::BasicWeight (int fl, int fw, int fh, int sl, int sw, int sh) {
    this->weights = nullptr;
-   this->right = nullptr;
-   this->back = nullptr;
-   this->down = nullptr;
-   try {
+   this->next = nullptr;
+	this->size = fl * fw * fh;
+	this->outputSize = sl * sw * sh;
+	long long amountLeftToAdd = this->size;
+	amountLeftToAdd *= this->outputSize * sizeof(float);
+	this->length = fl;
+	this->width = fw;
+	this->height = fh;
+	this->outputLength = sl;
+	this->outputWidth = sw;
+	this->outputHeight = sh;
+	int counter = this->size;
+
+	try {
       if (fl < 1 || fw < 1 || fh < 1 || sl < 1 || sw < 1 || sh < 1) {
          std::cout << " \nfl :: " << fl << " fw :: " << fw << " fh :: " << fh 
                   << " sl :: " << sl << " sw :: " << sw << " sh :: " << sh;
@@ -32,166 +38,146 @@ BasicWeight::BasicWeight (int fl, int fw, int fh, int sl, int sw, int sh) {
       std::cout << e.what();
       exit (0);
    };
-   this->generate (fl, fw, fh, sl, sw, sh);
-   // std::cout << "\n\n" << std::to_string(this->generate (fl, fw, fh, sl, sw, sh) + 1) << "\n\n";
+
+	// want to use BASIC_WEIGHT_MAX_SIZE / size * sizeof(float) as the number of matrixes to combine. to do this, i make the length longer
+	BasicWeight* current = this;
+	int toAdd = BASIC_WEIGHT_MAX_SIZE;
+	if (amountLeftToAdd < BASIC_WEIGHT_MAX_SIZE) {
+		toAdd = amountLeftToAdd;
+	}
+	
+	while (amountLeftToAdd > 0) {
+		// std::cout << "amountLeftToAdd: " << amountLeftToAdd << "\n";
+		if (amountLeftToAdd < BASIC_WEIGHT_MAX_SIZE) {
+			toAdd = amountLeftToAdd;
+		}
+		current->build(outputSize, toAdd, length, width, height, outputLength, outputWidth, outputHeight);
+		
+
+		amountLeftToAdd -= toAdd;
+		if (amountLeftToAdd > 0) {
+			current->next = new BasicWeight();
+			current = current->next;
+		} else {
+			current->next = nullptr;
+		}
+	}
+}
+ 
+void BasicWeight::build(int outputSize, int toAdd, int length, int width, int height, int outputLength, int outputWidth, int outputHeight) {
+	this->size = toAdd / sizeof(float);
+	this->outputSize = this->outputSize;
+	this->weights = new Matrix3D (1, 1, toAdd / sizeof(float));
+	this->weights->randomize();
+	this->length = length;
+	this->width = width;
+	this->height = height;
+	this->outputLength = outputLength;
+	this->outputWidth = outputWidth;
+	this->outputHeight = outputHeight;
 }
 
-
-BasicWeight::BasicWeight (){
-   this->weights = nullptr;
-   this->right = nullptr;
-   this->back = nullptr;
-   this->down = nullptr;
+BasicWeight::BasicWeight (int size, int fl, int fh, int fw, int sl, int sw, int sh) {
+	this->size = size;
+	this->weights = new Matrix3D(sl, sw, sh);
+	this->weights->randomize();
+	this->length = fl;
+	this->width = fw;
+	this->height = fh;
 }
 
+BasicWeight::BasicWeight () {
+	this->size = 0;
+	this->weights = nullptr;
+	this->next = nullptr;
+	this->length = 0;
+	this->width = 0;
+	this->height = 0;
+}
 
 BasicWeight::~BasicWeight(){
-   // needs to traverse through all of the down, and then all of the back, and then all of the right, without repeating
    if (this->weights != nullptr) {
+		delete this->next;
       delete this->weights;
    } else {
       return;
    }
-
-   if (this->right != nullptr) {
-      delete this->right;
-   } 
-   if (this->back != nullptr) {
-      delete this->back;
-   } 
-   if (this->down != nullptr){
-      delete this->down;
-   }
 }
 
 
-void BasicWeight::print () {
-   int total = this->print (0,0,0);
+int BasicWeight::print () {
+	this->weights->printMatrix();
+	if (this->next != nullptr) {
+		this->next->print();
+	}
+   return 1;
 }
 
 
 int BasicWeight::print (int length, int width, int height) {
-   // needs to traverse through all of the down, and then all of the back, and then all of the right, without repeating
-   if (this->weights != nullptr) {
-      std::cout << "Weight Location: [" << length << "][" << width << "][" << height << "]\n";
-      this->weights->printMatrix(); 
-   } else {
-      return 1;
-      std::cout << "No weights found!\n";
-   }
-
-   int depth = 0;
-   if (this->right != nullptr && width == 0 && height == 0) {
-      depth += this->right->print (length + 1, width, height) + 1;
-   } 
-   if (this->back != nullptr && height == 0) {
-      depth += this->back->print (length, width + 1, height) + 1;
-   } 
-
-   if (this->down != nullptr){
-      depth += this->down->print (length, width, height + 1) + 1;
-   }
-   return depth;
+	return -1;
 }
 
-
-BasicWeight* BasicWeight::add (int length, int width, int height, Matrix3D* weights) {
-   if (length == 0) {
-      if (width == 0) {
-         if (height == 0){
-            this->weights = weights;
-            return this;
-         } else {
-            this->down = this->down->add (length, width, height - 1, weights);
-            return this;
-         }
-      } else {
-         this->back = this->back->add (length, width - 1, height, weights);
-         return this;
-      }
-   } else {
-      this->right = this->right->add (length - 1, width, height, weights);
-      return this;
-   }
+Matrix3D* BasicWeight::getWeightMatrix (int index) {
+	BasicWeight* current = this;
+	while (index > 0) {
+		index--;
+		current = current->next;
+	}
+	return current->weights;
 }
 
+// returns the index of the matrix
+long long BasicWeight::getIndex (int fl, int fw, int fh, int sl, int sw, int sh) {
+	if (fl > this->length || fw > this->width || fh > this->height) {
+		std::cout << "Index out of bounds getIndex in BasicWeights\n";
+		exit(0);
+	}
 
-BasicWeight* BasicWeight::addNew (int length, int width, int height) {
-   Matrix3D* layer = new Matrix3D (length, width, height);
-   layer->randomize ();
-   return this->add (length, width, height, weights);
+	// get the index of the input matrix, multiply it by the outputSize, and then go to the specific spot in the output size
+	return (fl * this->width * this->height + fw * this->height + fh) * outputSize  + sl * this->outputWidth * this->outputHeight + sw * this->outputHeight + sh;
 }
 
-// broken
-
-int BasicWeight::generate (int fl, int fw, int fh, int sl, int sw, int sh) {
-   int i = 0;
-   // std::cout << fl << " " << fw << " " << fh << " " << sl << " " << sw << " " << sh << '\n';
-      // exit (0);
-   Matrix3D* weights = new Matrix3D (sl, sw, sh);
-   weights->randomize();
-   
-   this->weights = weights;
-   if (fl > 1 && fw >= 1 && fh >= 1) {
-      this->right = new BasicWeight();
-      i += this->right->generate (fl - 1, fw, fh, sl, sw, sh) + 1;
-   }
-   if (fw > 1 && fh >= 1) {
-      this->back = new BasicWeight();
-      i += this->back->generate (1, fw - 1, fh, sl, sw, sh) + 1;
-   }
-   if (fh > 1) {
-      this->down = new BasicWeight();
-      i += this->down->generate (1, 1, fh - 1, sl, sw, sh) + 1;
-   }
-   return i;
-}
-
-
-Matrix3D* BasicWeight::getWeightMatrix (int length, int width, int height) {
-   if (length == 0) {
-      if (width == 0) {
-         if (height == 0){
-            return this->getWeightMatrix ();
-         } else {
-            if (this->down == nullptr) {
-               return nullptr;
-            }
-            return this->down->getWeightMatrix (length, width, height - 1);
-         }
-      } else {
-         if (this->back == nullptr) {
-            return nullptr;
-         }
-         return this->back->getWeightMatrix (length, width - 1, height);
-      }
-   } else {
-      if (this->right == nullptr) {
-         return nullptr;
-      }
-      return this->right->getWeightMatrix (length - 1, width, height);
-   }
-}
-
-
-Matrix3D* BasicWeight::getWeightMatrix () {
-   return this->weights;
-}
-
-
+// goes to the location at that index and returns value shifted by sl sw and sh
 float* BasicWeight::getData (int fl, int fw, int fh, int sl, int sw, int sh) {
-   Matrix3D* weights = this->getWeightMatrix(fl, fw, fh);
-   if (weights == nullptr) {
-      return nullptr;
-   }
-   return weights->getData(sl, sw, sh);
+
+	// gets the big matrix that the little matrix is actually in
+	// std::cout << "fl: " << fl << '\n';
+	// std::cout << "fw: " << fw << '\n';
+	// std::cout << "fh: " << fh << '\n';
+	// std::cout << "sl: " << sl << '\n';
+	// std::cout << "sw: " << sw << '\n';
+	// std::cout << "sh: " << sh << '\n';
+	long long index = getIndex(fl, fw, fh, sl, sw, sh);
+	// if (index > 67108859) 
+		// std::cout << "index: " << index << '\n';
+	BasicWeight* current = this;
+	while (index >= this->size) {
+		index -= current->size;
+		// std::cout << "indexUpdated: " << index << '\n';
+		current = current->next;
+	}
+	return current->weights->getData(0, 0, index);
+}
+
+// goes to the location at that index and inserts value shifted by sl sw and sh
+void BasicWeight::insertData (float data, int fl, int fw, int fh, int sl, int sw, int sh) {
+	long long index = getIndex(fl, fw, fh, sl, sw, sh);
+	BasicWeight* current = this;
+	while (index >= size) {
+		index -= current->size;
+		current = current->next;
+	}
+	return current->weights->insert(data, 0, 0, index);
 }
 
 
-void BasicWeight::insert (float data, int fl, int fw, int fh, int sl, int sw, int sh) {
-   Matrix3D* weights = this->getWeightMatrix(fl, fw, fh);
-   if (weights == nullptr) {
-      return;
-   }
-   weights->insert(data, sl, sw, sh);
+void BasicWeight::setAll (double x) {
+	BasicWeight* current = this;
+	while (current != nullptr) {
+		if (current->weights != nullptr) {
+			current->weights->setAll(x);
+		}
+		current = current->next;
+	}
 }

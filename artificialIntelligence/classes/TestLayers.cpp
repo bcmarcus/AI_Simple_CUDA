@@ -5,7 +5,7 @@
 #include <artificialIntelligence/classes/BasicLayerList.cpp>
 #include <artificialIntelligence/classes/BasicWeight.cpp>
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 
 using namespace artificialIntelligence::classes;
 

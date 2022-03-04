@@ -3,8 +3,8 @@
 
 #include <iostream>
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
-#include <artificialIntelligence/classes/BasicLayer.hpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
+#include <artificialIntelligence/classes/BasicLayer.cuh>
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
@@ -27,9 +27,13 @@ namespace artificialIntelligence {
 
             void addNew (int length, int width, int height);
 
-            void calculateAndUpdateAll ();
+				void calculateAndUpdateAllGPU ();
 
-            void calculateAndUpdateLast ();
+				void calculateAndUpdateAllGPUV2 ();
+				
+            void calculateAndUpdateAllCPU ();
+
+            void calculateAndUpdateLastCPU ();
 
             void editRootMatrix (Matrix3D* newMatrix);
 

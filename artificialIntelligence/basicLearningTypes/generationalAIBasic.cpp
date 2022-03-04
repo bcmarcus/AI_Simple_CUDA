@@ -4,7 +4,7 @@
 #include <cmath>
 #include <sys/resource.h>
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp>
 #include <artificialIntelligence/functions/activationFunctions.hpp>
 

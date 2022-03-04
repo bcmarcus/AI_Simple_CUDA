@@ -1,22 +1,12 @@
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <coreutils/functions/debug/print.cpp>
-#include <coreutils/util/time.cpp>
+#include <coreutils/util/time.hpp>
+#include <coreutils/util/cudaErrors.cuh>
 #include <iostream>
 #include <sys/resource.h>
 
 using namespace coreutils::classes::matrixes;
 using namespace coreutils::functions::debug;
-
-// gpu error checking
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-	if (code != cudaSuccess) 
-	{
-		fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-		if (abort) exit(code);
-	}
-}
 
 // this program starts by consolidating each of the blocks through each of the threads
 // and then putting those into corresponding values in g_odata
@@ -161,12 +151,7 @@ float sumMultiplyOfMatrixesHost(Matrix3D* first, Matrix3D* second, int numBlocks
 	// std::cout << "Max byte index: " << maxArrayIndex * sizeof(float) << "\n";
  
 	double totalTime = 0;
-	do {
-		if (sizeLeft - maxArrayIndex < 0) {
-			maxArrayIndex = sizeLeft;
-		}
-		// std::cout << "Max array index " << maxArrayIndex << "\n";
-		// std::cout << "Size left " << sizeLeft << "\n";
+sumMultiplyOfMatrixesHost
 		// std::cout << "Sum should be " << (size - sizeLeft) * 0.05 << "\n";
 		// std::cout << "Sum actually is " << sum << '\n';
 		gpuErrchk(cudaMemcpy(device_firstArr, &firstArr[size - sizeLeft], maxArrayIndex * sizeof(float), cudaMemcpyHostToDevice));

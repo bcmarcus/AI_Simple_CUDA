@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
 
 using namespace coreutils::classes::matrixes;

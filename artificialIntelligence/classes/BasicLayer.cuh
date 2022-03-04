@@ -1,14 +1,15 @@
 #ifndef BASIC_LAYER_HPP
 #define BASIC_LAYER_HPP
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
-#include <artificialIntelligence/classes/BasicWeight.hpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
+#include <artificialIntelligence/classes/BasicWeight.cuh>
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
 
 namespace artificialIntelligence {
    namespace classes {
+		__global__ void calculatedAndUpdateLayerGPU(float* nodeValues, float* weights, float* output, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
 
       class BasicLayer{
          private:
@@ -33,9 +34,15 @@ namespace artificialIntelligence {
 
             BasicLayer* add (Matrix3D* layer, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
 
-            void calculateAndUpdateAll ();
+            void calculateAndUpdateAllCPU ();
 
-            void calculateAndUpdateSingle ();
+				void calculateAndUpdateAllGPU ();
+
+				void calculateAndUpdateAllGPUV2 ();
+
+			 	void calculateAndUpdateLayerGPU();
+
+            void calculateAndUpdateLayerCPU ();
 
             void setPrev (BasicLayer* prev);
 
@@ -43,7 +50,7 @@ namespace artificialIntelligence {
 
             void setLayerMatrix (Matrix3D* layerMatrix);
 
-            Matrix3D* getWeights (int length, int width, int height);
+				BasicWeight* getWeights ();
 
 				BasicWeight* newWeight (BasicLayer* firstLayer, BasicLayer* secondLayer);
 
@@ -61,6 +68,7 @@ namespace artificialIntelligence {
             
             static BasicLayer* loadFromFile (std::ifstream* inputFile, BasicLayer* prev = nullptr);
       };
+		
    }
 }
 #endif

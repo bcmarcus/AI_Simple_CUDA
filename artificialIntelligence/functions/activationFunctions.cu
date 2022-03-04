@@ -1,6 +1,6 @@
 #include <cmath>
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
-#include <artificialIntelligence/functions/activationFunctions.hpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
+#include <artificialIntelligence/functions/activationFunctions.cuh>
 
 using namespace coreutils::classes::matrixes;
 
@@ -19,17 +19,27 @@ namespace artificialIntelligence {
          }
          
          
-         Matrix3D* sigmoid(Matrix3D* m3d) 
+         Matrix3D* sigmoid(Matrix3D* m3d, bool returnNew) 
          { 
-            Matrix3D* returnMatrix = new Matrix3D (m3d->getLength(), m3d->getWidth(), m3d->getHeight());
-            for (int l = 0; l < m3d->getLength(); l++) {
-               for (int w = 0; w < m3d->getWidth(); w++) {
-                  for (int h = 0; h < m3d->getHeight(); h++) {
-                     returnMatrix->insert(sigmoid (*m3d->getData(l, w, h)), l, w, h);
-                  }
-               }
-            }
-            return returnMatrix;
+				if (returnNew) {
+					Matrix3D* returnMatrix = new Matrix3D (m3d->getLength(), m3d->getWidth(), m3d->getHeight());
+					for (int l = 0; l < m3d->getLength(); l++) {
+						for (int w = 0; w < m3d->getWidth(); w++) {
+							for (int h = 0; h < m3d->getHeight(); h++) {
+								returnMatrix->insert(sigmoid (*m3d->getData(l, w, h)), l, w, h);
+							}
+						}
+					}
+					return returnMatrix;
+				} 
+				for (int l = 0; l < m3d->getLength(); l++) {
+					for (int w = 0; w < m3d->getWidth(); w++) {
+						for (int h = 0; h < m3d->getHeight(); h++) {
+							m3d->insert(sigmoid (*m3d->getData(l, w, h)), l, w, h);
+						}
+					}
+				}
+				return m3d;
          }
 
          
@@ -81,6 +91,24 @@ namespace artificialIntelligence {
             }
             return returnMatrix;
          }
+
+
+			__device__ double device_sigmoid(double x) {
+				return 1 / (1 + expf(-x));
+			}
+
+			__device__ double device_dSigmoid(double x) {
+				return device_sigmoid(x) * (1 - device_sigmoid(x));
+			}
+
+			__device__ double device_tanh(double x) {
+				return tanhf(x);
+			}
+
+			__device__ double device_dTanh(double x) {
+				double y = tanhf(x);
+				return y * y;
+			}
       }
    }
 }

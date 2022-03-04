@@ -1,7 +1,7 @@
 #ifndef GENERATIONAL_AI_BASIC_HPP
 #define GENERATIONAL_AI_BASIC_HPP
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
 
 namespace artificialIntelligence {

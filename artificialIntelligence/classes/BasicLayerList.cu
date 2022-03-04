@@ -1,10 +1,10 @@
 #include <iostream>
 #include <fstream>
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
-#include <artificialIntelligence/classes/BasicLayer.hpp>
+#include <artificialIntelligence/classes/BasicLayer.cuh>
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
@@ -47,19 +47,34 @@ void BasicLayerList::editRootMatrix (Matrix3D* newMatrix) {
    }
 }
 
-
-void BasicLayerList::calculateAndUpdateAll () {
+void BasicLayerList::calculateAndUpdateAllGPU () {
    if (this->root != nullptr) {
-      this->root->calculateAndUpdateAll();
+      this->root->calculateAndUpdateAllGPU();
+   } else {
+      std::cout << "No root layer initialized!\n";
+   }
+}
+
+void BasicLayerList::calculateAndUpdateAllGPUV2 () {
+   if (this->root != nullptr) {
+      this->root->calculateAndUpdateAllGPUV2();
+   } else {
+      std::cout << "No root layer initialized!\n";
+   }
+}
+
+void BasicLayerList::calculateAndUpdateAllCPU () {
+   if (this->root != nullptr) {
+      this->root->calculateAndUpdateAllCPU();
    } else {
       std::cout << "No root layer initialized!\n";
    }
 }
 
 
-void BasicLayerList::calculateAndUpdateLast () {
+void BasicLayerList::calculateAndUpdateLastCPU () {
    if (this->last != nullptr) {
-      this->last->getPrev()->calculateAndUpdateAll();
+      this->last->getPrev()->calculateAndUpdateAllCPU();
    } else {
       std::cout << "No last layer initialized!\n";
    }

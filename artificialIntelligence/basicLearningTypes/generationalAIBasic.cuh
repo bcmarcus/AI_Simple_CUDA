@@ -1,7 +1,7 @@
 #ifndef GENERATIONAL_AI_BASIC_CUH
 #define GENERATIONAL_AI_BASIC_CUH
 
-#include <coreutils/classes/matrixes/Matrix3D.cpp>
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
 
 namespace artificialIntelligence {
