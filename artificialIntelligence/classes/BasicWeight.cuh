@@ -7,6 +7,10 @@
 
 using namespace coreutils::classes::matrixes;
 
+
+#define BASIC_WEIGHT_MAX_SIZE (1024*1024*256)
+
+// #define BASIC_WEIGHT_MAX_SIZE (4)
 namespace artificialIntelligence {
    namespace classes {
 
@@ -18,7 +22,7 @@ namespace artificialIntelligence {
             // names correspond to first, second, length, width, height
             BasicWeight (int fl, int fw, int fh, int sl, int sw, int sh);
 
-				void build(int outputSize, int toAdd, int length, int width, int height, int outputLength, int outputWidth, int outputHeight);
+				void build(int outputSize, int size, int toAdd, int length, int width, int height, int outputLength, int outputWidth, int outputHeight);
 
 				BasicWeight (int size, int fl, int fh, int fw, int sl, int sw, int sh);
 
@@ -29,6 +33,8 @@ namespace artificialIntelligence {
 				Matrix3D* getWeightMatrix (int index);
 
 				long long getIndex (int fl, int fw, int fh, int sl, int sw, int sh);
+
+				long long getSize ();
 
             float* getData (int fl, int fw, int fh, int sl, int sw, int sh);
 
@@ -41,7 +47,7 @@ namespace artificialIntelligence {
             Matrix3D* weights;
             BasicWeight* next;
 				
-				int size;
+				long long size;
 				int outputSize;
 				int length;
 				int width;

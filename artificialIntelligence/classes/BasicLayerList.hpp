@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <artificialIntelligence/classes/BasicLayer.cuh>
+#include "BasicLayer.cuh"
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
@@ -18,6 +18,8 @@ namespace artificialIntelligence {
             BasicLayerList (Matrix3D* layer, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
             
             BasicLayerList ();
+
+				~BasicLayerList ();
 
             void print (bool printBias = false, bool printWeights = false);
 

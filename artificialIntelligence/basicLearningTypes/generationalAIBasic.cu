@@ -141,31 +141,11 @@ namespace artificialIntelligence {
                      deltaPrev = new Matrix3D (deltaNext->getLength(), deltaNext->getWidth(), deltaNext->getHeight());
                      deltaPrev->setMatrix(deltaNext);
                    
-							error = new Matrix3D (currentLength, currentWidth, currentHeight);
-
+							// error = new Matrix3D (currentLength, currentWidth, currentHeight);
+							
 							// calculates the impact of each node and puts it into the weighted matrix. This is used to calculate error
-                     for (int l = 0; l < currentLength; l++) {
-                        for (int w = 0; w < currentWidth; w++) {
-                           for (int h = 0; h < currentHeight; h++) {
-										Matrix3D* weightMatrix = new Matrix3D(currentLayer->getNext()->getLayerMatrix()->getLength(), 
-																							currentLayer->getNext()->getLayerMatrix()->getWidth(), 
-																							currentLayer->getNext()->getLayerMatrix()->getHeight());
-										for (int l2 = 0; l2 < weightMatrix->getLength(); l2++) {
-                                 for (int w2 = 0; w2 < weightMatrix->getWidth(); w2++) {
-                                    for (int h2 = 0; h2 < weightMatrix->getHeight(); h2++) {
 
-                                       float value = *currentLayer->getWeights()->getData(l, w, h, l2, w2, h2) + *deltaPrev->getData(l2, w2, h2);
-                                       weightMatrix->insert(value, l2, w2, h2);
-                                    }
-                                 }
-                              }
-
-                              error->insert(weightMatrix->sum(), l, w, h);
-                              delete weightMatrix;
-                           }
-                        }
-                     }
-                     // }
+							error = currentLayer->calculateError(deltaPrev);
 
                      delete deltaNext;
                      dSig = dSigmoid (currentLayerMatrix);

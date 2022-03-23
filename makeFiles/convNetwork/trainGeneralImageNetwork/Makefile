@@ -7,7 +7,7 @@ DEFINES = -DUSE_ZLIB
 
 OPTFLAGS = -O2 -std=c++2a -Wall
 
-NVFLAGS = -I $(INCLUDE) -Xcompiler -O2 -L/usr/local/cuda-11.6/lib64 -lcuda -lstdc++ -lcudart -dc -arch=sm_50 --std=c++17
+NVFLAGS = -I $(INCLUDE) -Xcompiler -O2 -L/usr/local/cuda-11.6/lib64 -lcuda -lstdc++ -lcudart -dc -arch=sm_86 --std=c++17
 NVLINKFLAGS = -L/usr/local/cuda-11.6/lib64 -lcuda -lcudart
 #-lstdc++
 
@@ -41,7 +41,7 @@ linkCPU: $(CPPOBJS) $(NVCCOBJS) src/gpuCode.o
 	$(CCPP) $(CPPFLAGS) -o trainGeneralImageNetwork.out  $^ $(LINKFLAGS) $(NVLINKFLAGS) $(MAGICKLINKFLAGS)
 
 src/gpuCode.o: $(NVCCOBJS)
-	$(NVCC) --device-link -arch=sm_50 -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
+	$(NVCC) --device-link -arch=sm_86 -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
 
 src/simpleMath.o: $(INCLUDE)coreutils/functions/math/simpleMath.cpp 
 	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@

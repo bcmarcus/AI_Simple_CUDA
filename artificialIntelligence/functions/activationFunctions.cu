@@ -1,6 +1,6 @@
 #include <cmath>
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <artificialIntelligence/functions/activationFunctions.cuh>
+#include "activationFunctions.cuh"
 
 using namespace coreutils::classes::matrixes;
 

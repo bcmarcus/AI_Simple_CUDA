@@ -16,7 +16,7 @@ LINKFLAGS = -lz
 
 MAGICKLINKFLAGS = `Magick++-config --ldflags --libs`
 
-NVCCOBJS = src/testWeights.o \
+NVCCOBJS = src/testError.o \
 	src/cudaErrors.o \
 	src/BasicLayerList.o \
 	src/BasicLayer.o \
@@ -30,7 +30,7 @@ CPPOBJS = src/simpleMath.o \
 all: linkCPU
 
 linkCPU: $(CPPOBJS) $(NVCCOBJS) src/gpuCode.o
-	$(CCPP) $(CPPFLAGS) -o testWeights.out  $^ $(LINKFLAGS) $(NVLINKFLAGS) $(MAGICKLINKFLAGS)
+	$(CCPP) $(CPPFLAGS) -o testError.out  $^ $(LINKFLAGS) $(NVLINKFLAGS) $(MAGICKLINKFLAGS)
 
 src/gpuCode.o: $(NVCCOBJS)
 	$(NVCC) --device-link -arch=sm_86 -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
@@ -59,11 +59,11 @@ src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/BasicLayer.cu $(INCLU
 src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/testWeights.o : $(INCLUDE)testing/testWeights/testWeights.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/testError.o : $(INCLUDE)testing/testError/testError.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
 clean1: 
-	rm -f src/*.o ./testWeights.out
+	rm -f src/*.o ./testError.out
 
 clean: 
-	rm -f src/BasicLayer.o src/BasicWeight.o ./testWeights.out
+	rm -f src/BasicLayer.o ./testError.out src/BasicWeight.o

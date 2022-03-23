@@ -3,8 +3,8 @@
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
 
-#include <artificialIntelligence/classes/BasicLayerList.hpp>
-#include <artificialIntelligence/classes/BasicLayer.cuh>
+#include "BasicLayerList.hpp"
+#include "BasicLayer.cuh"
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
@@ -20,6 +20,9 @@ BasicLayerList::BasicLayerList () {
    this->last = nullptr;
 }
 
+BasicLayerList::~BasicLayerList() {
+	delete this->root;
+}
 
 void BasicLayerList::print (bool printBias, bool printWeights) {
    if (this->root != nullptr) {
@@ -47,13 +50,13 @@ void BasicLayerList::editRootMatrix (Matrix3D* newMatrix) {
    }
 }
 
-void BasicLayerList::calculateAndUpdateAllGPU () {
-   if (this->root != nullptr) {
-      this->root->calculateAndUpdateAllGPU();
-   } else {
-      std::cout << "No root layer initialized!\n";
-   }
-}
+// void BasicLayerList::calculateAndUpdateAllGPU () {
+//    if (this->root != nullptr) {
+//       this->root->calculateAndUpdateAllGPU();
+//    } else {
+//       std::cout << "No root layer initialized!\n";
+//    }
+// }
 
 void BasicLayerList::calculateAndUpdateAllGPUV2 () {
    if (this->root != nullptr) {

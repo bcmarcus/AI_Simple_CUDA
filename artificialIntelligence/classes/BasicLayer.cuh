@@ -2,14 +2,16 @@
 #define BASIC_LAYER_HPP
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <artificialIntelligence/classes/BasicWeight.cuh>
+#include "BasicWeight.cuh"
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
 
 namespace artificialIntelligence {
    namespace classes {
-		__global__ void calculatedAndUpdateLayerGPU(float* nodeValues, float* weights, float* output, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
+		__global__ void calculateAndUpdateLayerGPU(float* nodeValues, float* weights, float* output, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
+
+		__global__ void calculateError(float* weights, float* delta, float* error, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
 
       class BasicLayer{
          private:
@@ -63,6 +65,8 @@ namespace artificialIntelligence {
             BasicLayer* getNext ();
 
             BasicLayer* getPrev ();
+
+				Matrix3D* calculateError(Matrix3D* delta);
 
             void toFile (std::ofstream* outputFile);
             
