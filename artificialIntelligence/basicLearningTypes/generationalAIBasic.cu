@@ -163,36 +163,6 @@ namespace artificialIntelligence {
 
                      // <--> //
 
-
-                     //calculate the weights for this node
-                     for (int l = 0; l < currentLength; l++) {
-                        for (int w = 0; w < currentWidth; w++) {
-                           for (int h = 0; h < currentHeight; h++) {
-                              // up to here gets each node in the matrix
-                              float* nodeValue = currentLayerMatrix->getData(l, w, h);
-
-                                       // weightMatrix->printMatrix();
-                                       // deltaPrev->printMatrix();
-                              float value = 0;
-                              
-                              // std::cout << l << " " << w << " " << h << "\n";
-                              for (int l2 = 0; l2 < currentLayer->getNext()->getLayerMatrix()->getLength(); l2++) {
-                                 for (int w2 = 0; w2 < currentLayer->getNext()->getLayerMatrix()->getWidth(); w2++) {
-                                    for (int h2 = 0; h2 < currentLayer->getNext()->getLayerMatrix()->getHeight(); h2++) {
-                                       // up to here gets each weight in each node
-                                       // weight = 
-                                       // std::cout << l2 << " " << w2 << " " << h2 << " " << value << "\n";
-                                       // std::cout << *weightMatrix->getData(l2, w2, h2) <<  " " <<*nodeValue <<  " " << *deltaPrev->getData(l2, w2, h2) <<  " " << learningRate << '\n';
-                                      
-                                       value = *currentLayer->getWeights()->getData(l, w, h, l2, w2, h2) + *nodeValue * *deltaPrev->getData(l2, w2, h2) * learningRate;
-                                       currentLayer->getWeights()->insertData(value, l, w, h, l2, w2, h2);
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     }
-
                      currentLayer = currentLayer->getPrev();
                   }
 

@@ -12,7 +12,7 @@
 #include <coreutils/functions/sort/sortHelpers.cpp>
 #include <coreutils/functions/debug/print.cpp>
 
-#include <artificialIntelligence/classes/BasicLayer.hpp>
+#include <artificialIntelligence/classes/BasicLayer.cuh>
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
 
 using namespace coreutils::classes::matrixes;

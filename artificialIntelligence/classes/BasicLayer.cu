@@ -502,7 +502,34 @@ BasicLayer* BasicLayer::getPrev () {
    return this->prev;
 }
 
-Matrix3D* BasicLayer::calculateError (Matrix3D* delta) {
+Matrix3D* BasicLayer::calculateErrorCPU (Matrix3D* delta) {
+	Matrix3D* currentLayerMatrix = this->layerMatrix;
+	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
+	for (int l = 0; l < currentLayerMatrix->getLength(); l++) {
+		for (int w = 0; w < currentLayerMatrix->getWidth(); w++) {
+			for (int h = 0; h < currentLayerMatrix->getHeight(); h++) {
+				// currentLayer->print(true, true);
+				Matrix3D* outputMatrix = this->getNext()->getLayerMatrix();
+				Matrix3D* weightedMatrix = new Matrix3D (delta->getLength(), delta->getWidth(), delta->getHeight());
+				//*model->getRoot()->getWeights(l, w, h) * deltaPrev;
+				for (int l2 = 0; l2 < outputMatrix->getLength(); l2++) {
+					for (int w2 = 0; w2 < outputMatrix->getWidth(); w2++) {
+						for (int h2 = 0; h2 < outputMatrix->getHeight(); h2++) {
+							// std::cout << "*currentLayer->getWeights()->getData(l, w, h, l2, w2, h2): " << *currentLayer->getWeights()->getData(l, w, h, l2, w2, h2) << '\n';
+							// std::cout << "*deltaPrev->getData(l2, w2, h2): " << *deltaPrev->getData(l2, w2, h2) << '\n';
+							weightedMatrix->insert(*this->getWeights()->getData(l, w, h, l2, w2, h2) * *delta->getData(l2, w2, h2), l2, w2, h2);
+						}
+					}
+				}
+				error->insert(weightedMatrix->sum(), l, w, h);
+				delete weightedMatrix;
+			}
+		}
+	}
+	return error;
+}
+
+Matrix3D* BasicLayer::calculateErrorGPU (Matrix3D* delta) {
 	BasicLayer* currentLayer = this;
 	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
 
@@ -693,7 +720,6 @@ Matrix3D* BasicLayer::calculateError (Matrix3D* delta) {
 	gpuErrchk(cudaFree(current_weights));	
 	gpuErrchk(cudaFree(next_weights));
 	return errorMatrix;
-
 }
 
 __global__ void artificialIntelligence::classes::calculateError(float* weights, float* delta, float* error, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingInputID) {
@@ -737,7 +763,151 @@ __global__ void artificialIntelligence::classes::calculateError(float* weights, 
 	}
 }
 
+Matrix3D* BasicLayer::updateWeightsCPU (Matrix3D* delta, double learningRate) {
+	Matrix3D* currentLayerMatrix = this->layerMatrix;
+	for (int l = 0; l < currentLayerMatrix->getLength(); l++) {
+		for (int w = 0; w < currentLayerMatrix->getWidth(); w++) {
+			for (int h = 0; h < currentLayerMatrix->getHeight(); h++) {
+				// up to here gets each node in the matrix
+				float inputValue = *currentLayerMatrix->getData(l, w, h);
+				float value = 0;
+				
+				Matrix3D* weightMatrix = this->getNext()->getLayerMatrix();
+				
+				for (int l2 = 0; l2 < weightMatrix->getLength(); l2++) {
+					for (int w2 = 0; w2 < weightMatrix->getWidth(); w2++) {
+						for (int h2 = 0; h2 < weightMatrix->getHeight(); h2++) {
+							value = *this->weights->getData(l, w, h, l2, w2, h2) + inputValue * *delta->getData(l2, w2, h2) * learningRate;
+							this->weights->insertData(value, l, w, h, l2, w2, h2);
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
+// updates weights one at a time, with each kernel doing maxWeightIndex weights
+Matrix3D* BasicLayer::updateWeightsGPU (Matrix3D* delta, double learningRate) {
+	BasicLayer* currentLayer = this;
+	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
+
+	long long numInputs = currentLayerMatrix->getSize() / sizeof(float); // the number of blocks that will be generated
+	long long numOutputs = currentLayer->getNext()->getLayerMatrix()->getSize() / sizeof(float);
+	long long numWeights = numInputs * numOutputs;
+	long long numInputsRemaining = numInputs;
+	long long numWeightsRemaining = numWeights;
+	long long inputIndex = 0;
+	long long numBlocks = numInputs > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : numInputs; 
+	long long numThreads = 512; // arbitrary
+	long long maxWeightIndex = numBlocks * numOutputs;
+	long long numPerThread = std::ceil ((double)maxWeightIndex / (numBlocks * numThreads)); // number of weights per iteration
+	long long sharedSize = numThreads * sizeof(float); 
+	if (maxWeightIndex > numWeights) {
+		maxWeightIndex = numWeights;
+	}
+
+
+	// streams for asynchronous
+	cudaStream_t stream1, stream2;
+	cudaStreamCreate ( &stream1); 
+	cudaStreamCreate ( &stream2);
+
+	BasicWeight* currentWeight = currentLayer->getWeights();
+	long long matrixSize = currentWeight->weights->getSize() / sizeof(float);
+	long long numLeftToAdd = maxWeightIndex;
+	long long weightIndex = 0;
+	long long numLastAdded = 0;
+	long long currentWeightMatrixIndex = 0;
+	long long weightsAddedLastSet = 0;
+	long long weightsInCurrentKernelRun = 0;
+
+	int numberOfWeightsToAdd = maxWeightIndex;
+	int weightsInCurrentMatrix = currentWeight->getWeightMatrix(0)->getSize() / sizeof(float);
+
+	int toAdd = weightsInCurrentMatrix > numberOfWeightsToAdd ? numberOfWeightsToAdd : weightsInCurrentMatrix;
+	// std::cout << "\ntoAdd: " <<  toAdd << "\n";
+	// std::cout << "numberOfWeightsToAdd: " <<  numberOfWeightsToAdd << "\n";
+	// std::cout << "weightsInCurrentMatrix: " <<  weightsInCurrentMatrix << "\n";
+	// std::cout << "currentWeightMatrixIndex: " <<  currentWeightMatrixIndex << "\n";
+
+
+	Matrix3D* inputMatrix = currentLayer->getLayerMatrix();
+	float* current_input;
+	float* current_delta;
+	gpuErrchk(cudaMalloc((void **) &current_input, inputMatrix->getSize()));
+	gpuErrchk(cudaMalloc((void **) &current_delta, delta->getSize()));
+	gpuErrchk(cudaMemcpy(current_input, inputMatrix->getArr(), inputMatrix->getSize(), cudaMemcpyHostToDevice));
+	gpuErrchk(cudaMemcpy(current_delta, delta->getArr(), delta->getSize(), cudaMemcpyHostToDevice));
+	
+
+	float* current_weights;
+	float* next_weights;
+	gpuErrchk(cudaMalloc((void **) &current_weights, currentWeight->getWeightMatrix(0)->getSize() / sizeof(float)));
+	gpuErrchk(cudaMemcpy(current_weights, currentWeight->getWeightMatrix(0), currentWeight->getWeightMatrix(0)->getSize() / sizeof(float), cudaMemcpyHostToDevice));
+
+	int numWeightsAdded = 0;
+	
+	int weightsUsed = 0;
+	int startingInputId = 0;
+	while (numWeights - weightsUsed > 0){
+		// std::cout << "inside22\n";
+		// std::cout << "numBlocks: " << numBlocks << '\n';
+		// std::cout << "numInputs: " << numInputs << '\n';
+		// std::cout << "numPerThread: " << numPerThread << '\n';
+		// std::cout << "weightsInCurrentKernelRun: " << weightsInCurrentKernelRun << "\n";
+		// std::cout << "numInputsRemaining: " << numInputsRemaining << '\n';
+		// std::cout << "weightsUsed: " << weightsUsed << "\n";
+		// std::cout << "startingInputID: " << startingInputID << "\n\n";
+
+		if (numInputsRemaining - numBlocks < 0) {
+			numBlocks = numInputsRemaining;
+		}
+
+		// needs to make it so that the first x inputs are all added together by the blocks that exist. 
+		
+		artificialIntelligence::classes::updateWeights<<<numBlocks, numThreads, sharedSize, stream1>>>(current_weights, current_delta, current_input, numInputs, numOutputs, numPerThread, weightsInCurrentKernelRun, numWeights, weightsUsed, startingInputId, learningRate);
+		inputIndex += numBlocks;
+		numInputsRemaining -= numBlocks;
+
+		weightsUsed += currentWeight->getWeightMatrix(currentWeightMatrixIndex)->getSize() / sizeof(float);
+
+		// add more weights if they exist
+		currentWeightMatrixIndex++;
+		if (numWeights - weightsUsed > 0) {
+			gpuErrchk(cudaMalloc((void **) &next_weights, currentWeight->getWeightMatrix(currentWeightMatrixIndex)->getSize() / sizeof(float)));
+			gpuErrchk(cudaMemcpy(next_weights, currentWeight->getWeightMatrix(currentWeightMatrixIndex), currentWeight->getWeightMatrix(0)->getSize() / sizeof(float), cudaMemcpyHostToDevice));
+		}
+
+		// bring weights back
+		gpuErrchk(cudaDeviceSynchronize());
+		gpuErrchk(cudaMemcpy(currentWeight->getWeightMatrix(currentWeightMatrixIndex - 1), current_weights, currentWeight->getWeightMatrix(0)->getSize() / sizeof(float), cudaMemcpyHostToDevice));
+
+		float* temp = current_weights;
+		current_weights = next_weights;
+		next_weights = temp;
+	}
+}
+
+__global__ void artificialIntelligence::classes::updateWeights(float* weights, float* delta, float* input, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingInputID, double learningRate) {
+	extern __shared__ float sdata[];
+	unsigned int tid = threadIdx.x;
+	unsigned int numThreads = blockDim.x;
+	unsigned long long inputNodeId = blockIdx.x + startingInputID;
+	unsigned long long outputNodeId = 0;
+	unsigned long long weightIndex = tid + blockIdx.x * outputSize;
+	unsigned int gridSize = numThreads;
+	int weightsToAddStart = outputSize * (blockIdx.x);
+	int weightsToAddEnd = outputSize * (blockIdx.x + 1);
+
+	while (weightIndex >= weightsToAddStart && weightIndex < weightsToAddEnd) {
+		weights[weightIndex] += input[inputNodeId] * delta[outputNodeId] * learningRate;
+		weightIndex += gridSize;
+	}
+}
+// weight[weightIndex] + currentLayer input[value] * deltaPrev [output value] * learningRate
+// insert the weight into the proper place
+// return weights
 
 
 

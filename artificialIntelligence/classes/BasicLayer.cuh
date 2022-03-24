@@ -13,6 +13,8 @@ namespace artificialIntelligence {
 
 		__global__ void calculateError(float* weights, float* delta, float* error, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
 
+		__global__ void updateWeights(float* weights, float* delta, float* input, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId, double learningRate);
+
       class BasicLayer{
          private:
             Matrix3D* layerMatrix;
@@ -66,7 +68,13 @@ namespace artificialIntelligence {
 
             BasicLayer* getPrev ();
 
-				Matrix3D* calculateError(Matrix3D* delta);
+				Matrix3D* calculateErrorCPU (Matrix3D* delta);
+
+				Matrix3D* calculateErrorGPU(Matrix3D* delta);
+
+				Matrix3D* updateWeightsGPU (Matrix3D* delta, double learningRate);
+
+				Matrix3D* updateWeightsCPU(Matrix3D* delta, double learningRate);
 
             void toFile (std::ofstream* outputFile);
             
