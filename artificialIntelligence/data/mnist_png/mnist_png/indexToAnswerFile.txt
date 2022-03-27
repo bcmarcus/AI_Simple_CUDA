@@ -1,2 +1,10 @@
 0 zero
-1 one
+1 five
+2 two
+3 one
+4 four
+5 six
+6 nine
+7 seven
+8 eight
+9 three

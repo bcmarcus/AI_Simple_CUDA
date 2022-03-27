@@ -1,6 +1,4 @@
-#-fsanitize=address,null -fno-omit-frame-pointer
-
-
+# Makefile
 CC = gcc
 CCPP = g++
 NVCC = /usr/local/cuda-11.6/bin/nvcc
@@ -12,53 +10,54 @@ OPTFLAGS = -O2 -std=c++2a -Wall
 
 NVFLAGS = -I $(INCLUDE) -I $(INCLUDE)../ -Xcompiler -O2 -L/usr/local/cuda-11.6/lib64 -lcuda -lstdc++ -lcudart -dc -arch=sm_86 --std=c++17
 NVLINKFLAGS = -L/usr/local/cuda-11.6/lib64 -lcuda -lcudart
-#-lstdc++
 
 CPPFLAGS = $(OPTFLAGS) -I $(INCLUDE) -I $(INCLUDE)../ $(DEFINES)
-LINKFLAGS = -lz
+LINKFLAGS = -lz 
 
 MAGICKLINKFLAGS = `Magick++-config --ldflags --libs`
 
-# objs = src/generationalAIBasic.o \
-# 	src/BasicLayerList.o \
-# 	src/BasicLayer.o \
-# 	src/BasicWeight.o \
-# 	src/activationFunctions.o 
-
-NVCCOBJS = src/generationalAIBasic.o \
+NVCCOBJS = src/testGeneralImageNetwork.o \
 	src/cudaErrors.o \
 	src/BasicLayerList.o \
+	src/Matrix3D.o \
 	src/BasicLayer.o \
 	src/BasicWeight.o \
-	src/activationFunctions.o \
-	src/Matrix3D.o
+	src/activationFunctions.o
 
-CPPOBJS = src/simpleMath.o \
-	src/time.o \
-	src/trainGeneralImageNetwork.o \
-	src/generateInput.o
+CPPOBJS = src/time.o \
+	src/print.o \
+	src/generateInput.o \
+	src/sortHelpers.o \
+	src/sortingAlgorithms.o
+
 
 all: linkCPU
 
 linkCPU: $(CPPOBJS) $(NVCCOBJS) src/gpuCode.o
-	$(CCPP) $(CPPFLAGS) -o trainGeneralImageNetwork.out  $^ $(LINKFLAGS) $(NVLINKFLAGS) $(MAGICKLINKFLAGS)
+	$(CCPP) $(CPPFLAGS) -o testGeneralImageNetwork.out  $^ $(LINKFLAGS) $(NVLINKFLAGS) $(MAGICKLINKFLAGS)
 
 src/gpuCode.o: $(NVCCOBJS)
 	$(NVCC) --device-link -arch=sm_86 -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
 
-src/simpleMath.o: $(INCLUDE)coreutils/functions/math/simpleMath.cpp 
+src/time.o: $(INCLUDE)coreutils/util/time.cpp 
 	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-src/time.o: $(INCLUDE)coreutils/util/time.cpp 
+src/print.o: $(INCLUDE)coreutils/functions/debug/print.cpp 
+	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+src/sortHelpers.o: $(INCLUDE)coreutils/functions/sort/sortHelpers.cpp 
+	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+src/sortingAlgorithms.o: $(INCLUDE)coreutils/functions/sort/sortingAlgorithms.cpp 
 	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 src/generateInput.o: $(INCLUDE)../imageEdit/generate/generateInput.cpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@ `Magick++-config --cxxflags --cppflags`
 
-src/cudaErrors.o: $(INCLUDE)coreutils/util/cudaErrors.cu $(INCLUDE)coreutils/util/cudaErrors.cuh 
+src/Matrix3D.o: $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cu
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/Matrix3D.o: $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cu
+src/cudaErrors.o: $(INCLUDE)coreutils/util/cudaErrors.cu $(INCLUDE)coreutils/util/cudaErrors.cuh 
 	$(NVCC) $(NVFLAGS) $< -o $@
 
 src/activationFunctions.o: $(INCLUDE)artificialIntelligence/functions/activationFunctions.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
@@ -73,14 +72,11 @@ src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/BasicLayer.cu $(INCLU
 src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/generationalAIBasic.o: $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu  $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/classes/BasicLayer.cuh $(INCLUDE)artificialIntelligence/functions/activationFunctions.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh 
-	$(NVCC) $(NVFLAGS) -c $< -o $@
-
-src/trainGeneralImageNetwork.o : $(INCLUDE)artificialIntelligence/neuralNetworks/trainGeneralImageNetwork.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
-	$(NVCC) $(NVFLAGS) -c $< -o $@
-
-clean: 
-	rm -f src/generationalAIBasic.o trainGeneralImageNetwork.out
+src/testGeneralImageNetwork.o: $(INCLUDE)artificialIntelligence/neuralNetworks/testGeneralImageNetwork.cu $(CFLAGS) $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/classes/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+	$(NVCC) $(NVFLAGS) $< -o $@
 
 clean1: 
-	rm -f src/*.o trainGeneralImageNetwork.out
+	rm -f src/*.o ./testGeneralImageNetwork.out
+
+clean: 
+	rm -f ./testGeneralImageNetwork.out

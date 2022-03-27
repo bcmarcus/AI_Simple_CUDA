@@ -32,12 +32,14 @@ namespace artificialIntelligence {
 
             ~BasicLayer ();
 
+				BasicLayer (const BasicLayer& b, bool copyAll = false);
+
             int print (bool printBias = false, bool printWeights = false, int depth = 1);
 
             BasicLayer* add (BasicLayer* layer);
 
             BasicLayer* add (Matrix3D* layer, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
-
+	
             void calculateAndUpdateAllCPU ();
 
 				void calculateAndUpdateAllGPU ();
@@ -50,31 +52,35 @@ namespace artificialIntelligence {
 
             void setPrev (BasicLayer* prev);
 
-            Matrix3D* getLayerMatrix ();
+            Matrix3D* getLayer () const;
 
-            void setLayerMatrix (Matrix3D* layerMatrix);
+            void setLayer (Matrix3D* layerMatrix);
 
-				BasicWeight* getWeights ();
+				void setBias (Matrix3D* biasMatrix);
+
+				void setWeights (BasicWeight* weight);
+
+				BasicWeight* getWeights () const;
 
 				BasicWeight* newWeight (BasicLayer* firstLayer, BasicLayer* secondLayer);
 
-            Matrix3D* getBias ();
+            Matrix3D* getBias () const;
 
             void setBiasMatrix (Matrix3D* bias);
 
             BasicLayer* getLast ();
 
-            BasicLayer* getNext ();
+            BasicLayer* getNext () const;
 
-            BasicLayer* getPrev ();
+            BasicLayer* getPrev () const;
 
 				Matrix3D* calculateErrorCPU (Matrix3D* delta);
 
 				Matrix3D* calculateErrorGPU(Matrix3D* delta);
 
-				Matrix3D* updateWeightsGPU (Matrix3D* delta, double learningRate);
+				void updateWeightsGPU (Matrix3D* delta, double learningRate);
 
-				Matrix3D* updateWeightsCPU(Matrix3D* delta, double learningRate);
+				void updateWeightsCPU(Matrix3D* delta, double learningRate);
 
             void toFile (std::ofstream* outputFile);
             

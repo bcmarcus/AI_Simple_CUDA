@@ -14,55 +14,47 @@
 using namespace coreutils::classes::matrixes;
 using namespace coreutils::functions::debug;
 
+#define LEARNING_RATE 0.1
+
 void test1() {
 	int l = 2;
 	int w = 2;
 	int h = 2;
 	Matrix3D* root = new Matrix3D(l, w, h);
+	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 2;
 	int w2 = 2;
 	int h2 = 2;
 	model->addNew(l2, w2, h2);
-	
-	model->addNew(1, 1, 1);
+	model->getRoot()->getNext()->getLayer()->setAll(1);
 
 	model->getRoot()->getWeights()->setAll(2);
-
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-
-	Matrix3D* tempError = new Matrix3D(*error);
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
-	
+	// currentLayerCPU->print(0, 1);
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	currentLayerCPU->getWeights()->getWeightMatrix(0)->setAll(0);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerGPU->print(0, 1);
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test1random() {
@@ -77,41 +69,32 @@ void test1random() {
 	int h2 = 2;
 	model->addNew(l2, w2, h2);
 	
-	model->addNew(1, 1, 1);
-
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	
+	
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-
-
-	Matrix3D* tempError = new Matrix3D(*error);
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
-	
+	// currentLayerCPU->print(0, 1);
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerGPU->print(0, 1);
+
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test2() {
@@ -119,50 +102,42 @@ void test2() {
 	int w = 2;
 	int h = 3;
 	Matrix3D* root = new Matrix3D(l, w, h);
+	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 2;
 	int w2 = 1;
 	int h2 = 2;
 	model->addNew(l2, w2, h2);
+	model->getRoot()->getNext()->getLayer()->setAll(1);
 	
-	model->addNew(1, 1, 1);
 
 	model->getRoot()->getWeights()->setAll(2);
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-	Matrix3D* tempError = new Matrix3D(*error);
-
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test2random() {
@@ -177,43 +152,32 @@ void test2random() {
 	int h2 = 2;
 	model->addNew(l2, w2, h2);
 	
-	model->addNew(1, 1, 1);
+	
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-
-
-	Matrix3D* tempError = new Matrix3D(*error);
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test3() {
@@ -221,50 +185,43 @@ void test3() {
 	int w = 2;
 	int h = 3;
 	Matrix3D* root = new Matrix3D(l, w, h);
+	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 2;
 	int w2 = 2;
 	int h2 = 3;
 	model->addNew(l2, w2, h2);
+	model->getRoot()->getNext()->getLayer()->setAll(1);
 	
-	model->addNew(1, 1, 1);
+	
 
 	model->getRoot()->getWeights()->setAll(2);
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-
-	Matrix3D* tempError = new Matrix3D(*error);
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
-
+	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test3random() {
@@ -279,43 +236,32 @@ void test3random() {
 	int h2 = 3;
 	model->addNew(l2, w2, h2);
 	
-	model->addNew(1, 1, 1);
+	
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-
-
-	Matrix3D* tempError = new Matrix3D(*error);
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test4() {
@@ -323,52 +269,42 @@ void test4() {
 	int w = 10;
 	int h = 82;
 	Matrix3D* root = new Matrix3D(l, w, h);
+	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 6;
 	int w2 = 17;
 	int h2 = 11;
 	model->addNew(l2, w2, h2);
+	model->getRoot()->getNext()->getLayer()->setAll(1);
 	
-	model->addNew(1, 1, 1);
 
 	model->getRoot()->getWeights()->setAll(2);
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-	Matrix3D* tempError = new Matrix3D(*error);
-	std::cout << "\n\n";
-
-
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test4random() {
@@ -383,149 +319,123 @@ void test4random() {
 	int h2 = 11;
 	model->addNew(l2, w2, h2);
 	
-	model->addNew(1, 1, 1);
+	
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-	Matrix3D* tempError = new Matrix3D(*error);
-	std::cout << "\n\n";
-
-
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
-	
+	// currentLayerCPU->print(0, 1);
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerCPU->print(0, 1);
+
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test45random() {
-	int l = 3;
-	int w = 228;
-	int h = 228;
+	int l = 1;
+	int w = 5;
+	int h = 105;
 	Matrix3D* root = new Matrix3D(l, w, h);
+	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
-	int l2 = 100;
-	int w2 = 1;
-	int h2 = 1;
+	int l2 = 1;
+	int w2 = 5;
+	int h2 = 25;
 	model->addNew(l2, w2, h2);
+	model->getRoot()->getNext()->getLayer()->setAll(1);
 	
-	model->addNew(1, 1, 1);
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	model->getRoot()->getWeights()->setAll(2);
+	
+	
+
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-	
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-	
-	Matrix3D* tempError = new Matrix3D(*error);
-	std::cout << "\n\n";
-
-
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+	currentLayerCPU->print(0, 1);
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
-	
+	currentLayerGPU->print(0, 1);
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
+
 
 void test5() {
 	int l = 3;
 	int w = 228;
 	int h = 228;
 	Matrix3D* root = new Matrix3D(l, w, h);
+	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 1;
 	int w2 = 100;
 	int h2 = 100;
 	model->addNew(l2, w2, h2);
+	model->getRoot()->getNext()->getLayer()->setAll(1);
 	
-	model->addNew(1, 1, 1);
 
 	model->getRoot()->getWeights()->setAll(2);
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-
-	Matrix3D* tempError = new Matrix3D(*error);
-	std::cout << "\n\n";
-
-
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << (currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) &&
+	 									currentLayerCPU->getWeights()->getWeightMatrix(4)->equals(currentLayerGPU->getWeights()->getWeightMatrix(4)) &&
+										currentLayerCPU->getWeights()->getWeightMatrix(5)->equals(currentLayerGPU->getWeights()->getWeightMatrix(5))) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(23)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 void test5random() {
@@ -540,77 +450,67 @@ void test5random() {
 	int h2 = 100;
 	model->addNew(l2, w2, h2);
 	
-	model->addNew(1, 1, 1);
+	
 
-	BasicLayer* currentLayer = model->getRoot();
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
-	Matrix3D* error = new Matrix3D(currentLayerMatrix->getLength(), currentLayerMatrix->getWidth(), currentLayerMatrix->getHeight());
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	BasicLayer* currentLayerCPU = model->getRoot();
+	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	double val;
-
-	error = currentLayer->calculateErrorCPU(deltaPrev);
-	// error->printMatrix(); 
-	// exit(0);
-	Matrix3D* tempError = new Matrix3D(*error);
-	std::cout << "\n\n";
-
-
+	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	// val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
-	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
+
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	error = model->getRoot()->calculateErrorGPU(deltaPrev);
-	// error->printMatrix(); 
+	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << tempError->equals(error) << '\n';
-	std::cout << *tempError->getData(l - 1, w - 1, h - 1) << '\n';
-	std::cout << *error->getData(l - 1, w - 1, h - 1);
+	std::cout << "EQUALS: " << (currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0),  0.00001) &&
+	 									currentLayerCPU->getWeights()->getWeightMatrix(4)->equals(currentLayerGPU->getWeights()->getWeightMatrix(4),  0.00001) &&
+										currentLayerCPU->getWeights()->getWeightMatrix(5)->equals(currentLayerGPU->getWeights()->getWeightMatrix(5),  0.00001)) << '\n';
+	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
+	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete tempError;
-	delete error;
+	delete currentLayerGPU;
 }
 
 int main() {
-	std::cout << "Starting test 1\n";
-	test1();
-	std::cout << "\n\n";
-	std::cout << "Starting test 1 random\n";
-	test1random();
-	std::cout << "\n\n";
-	std::cout << "Starting test 2\n";
-	test2();
-	std::cout << "\n\n";
-	std::cout << "Starting test 2 random\n";
-	test2random();
-	std::cout << "\n\n";
-	std::cout << "Starting test 3\n";
-	test3();
-	std::cout << "\n\n";
-	std::cout << "Starting test 3 random\n";
-	test3random();
-	std::cout << "\n\n";
-	std::cout << "Starting test 4\n";
-	test4();
-	std::cout << "\n\n";
-	std::cout << "Starting test 4 random\n";
-	test4random();
-	std::cout << "\n\n";
-	std::cout << "Starting test 45 random\n";
-	test45random();
-	std::cout << "\n\n";
-	std::cout << "Starting test 5\n";
-	test5();
-	std::cout << "\n\n";
+	// std::cout << "Starting test 1\n";
+	// test1();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 1 random\n";
+	// test1random();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 2\n";
+	// test2();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 2 random\n";
+	// test2random();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 3\n";
+	// test3();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 3 random\n";
+	// test3random();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 4\n";
+	// test4();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 4 random\n";
+	// test4random();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 45 random\n";
+	// test45random();
+	// std::cout << "\n\n";
+	// std::cout << "Starting test 5\n";
+	// test5();
+	// std::cout << "\n\n";
 	std::cout << "Starting test 5 random\n";
 	test5random();
 	std::cout << "\n\n\n";

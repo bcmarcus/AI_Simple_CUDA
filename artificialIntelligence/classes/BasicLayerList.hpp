@@ -21,6 +21,8 @@ namespace artificialIntelligence {
 
 				~BasicLayerList ();
 
+				BasicLayerList(const BasicLayerList& bll);
+
             void print (bool printBias = false, bool printWeights = false);
 
             void add (BasicLayer* layer);

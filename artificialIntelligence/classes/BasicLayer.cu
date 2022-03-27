@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
+#include <unistd.h>
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <coreutils/util/time.hpp>
@@ -73,6 +74,53 @@ BasicLayer::~BasicLayer () {
 	}
 }
 
+// does not copy next
+BasicLayer::BasicLayer (const BasicLayer& b, bool copyNext) {
+	if (b.getLayer() == nullptr) {
+		this->layerMatrix = nullptr;
+	} else {
+		this->layerMatrix = new Matrix3D(*b.getLayer());
+	}
+	if (b.getBias() == nullptr) {
+		this->biasMatrix = nullptr;
+	} else {
+		this->biasMatrix = new Matrix3D(*(b.getBias()));
+	}
+	if (b.getWeights() == nullptr) {
+		this->weights = nullptr;
+	} else {
+		this->weights = new BasicWeight(*(b.getWeights()));
+	}
+	this->next = nullptr;
+	this->prev = nullptr;
+
+	if (copyNext) {
+		const BasicLayer* bCurrent = &b;
+		BasicLayer* thisCurrent = this;
+		while (bCurrent->getNext() != nullptr) {
+			bCurrent = bCurrent->getNext();
+			thisCurrent->next = new BasicLayer();
+			if (bCurrent->getLayer() == nullptr) {
+				thisCurrent->next->layerMatrix = nullptr;
+			} else {
+				thisCurrent->next->setLayer(new Matrix3D (*bCurrent->getLayer()));
+			}
+			if (bCurrent->getBias() == nullptr) {
+				thisCurrent->next->biasMatrix = nullptr;
+			} else {
+				thisCurrent->next->setBias(new Matrix3D (*bCurrent->getBias()));
+			}
+			if (bCurrent->getWeights() == nullptr) {
+				thisCurrent->next->weights = nullptr;
+			} else {
+				thisCurrent->next->setWeights(new BasicWeight (*bCurrent->getWeights()));
+			}
+			thisCurrent->next->setPrev(thisCurrent);
+			thisCurrent = thisCurrent->next;
+		}
+	}
+} 
+
 int BasicLayer::print (bool printBias, bool printWeights, int depth) {
    if (this->layerMatrix != nullptr) {
       std::cout << "\n\nCurrent Index: " << depth << '\n';
@@ -101,7 +149,7 @@ int BasicLayer::print (bool printBias, bool printWeights, int depth) {
    if (this->next == nullptr) {
       return depth;
    }
-   return this->next->print(printBias, printWeights, depth + 1);;
+   return this->next->print(printBias, printWeights, depth + 1);
 }  
 
 BasicLayer* BasicLayer::add (Matrix3D* layerMatrix, Matrix3D* biasMatrix, BasicWeight* weights) {
@@ -126,12 +174,12 @@ BasicLayer* BasicLayer::add (Matrix3D* layerMatrix, Matrix3D* biasMatrix, BasicW
 
 BasicWeight* BasicLayer::newWeight(BasicLayer* firstLayer, BasicLayer* secondLayer) {
 	return new BasicWeight (
-		firstLayer->getLayerMatrix()->getLength(), 
-		firstLayer->getLayerMatrix()->getWidth(),
-		firstLayer->getLayerMatrix()->getHeight(),
-		secondLayer->getLayerMatrix()->getLength(),
-		secondLayer->getLayerMatrix()->getWidth(),
-		secondLayer->getLayerMatrix()->getHeight());
+		firstLayer->getLayer()->getLength(), 
+		firstLayer->getLayer()->getWidth(),
+		firstLayer->getLayer()->getHeight(),
+		secondLayer->getLayer()->getLength(),
+		secondLayer->getLayer()->getWidth(),
+		secondLayer->getLayer()->getHeight());
 }
 
 
@@ -146,10 +194,10 @@ BasicLayer* BasicLayer::add (BasicLayer* layer) {
 
 void BasicLayer::calculateAndUpdateAllGPUV2() {
 	BasicLayer* currentLayer = this;
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
+	Matrix3D* currentLayerMatrix = currentLayer->getLayer();
 
 	long long numInputs = currentLayerMatrix->getSize() / sizeof(float); // the number of blocks that will be generated
-	long long numOutputs = currentLayer->getNext()->getLayerMatrix()->getSize() / sizeof(float);
+	long long numOutputs = currentLayer->getNext()->getLayer()->getSize() / sizeof(float);
 	long long numWeights = numInputs * numOutputs;
 	long long numOutputsRemaining = numOutputs;
 	long long outputIndex = 0;
@@ -164,7 +212,7 @@ void BasicLayer::calculateAndUpdateAllGPUV2() {
 	}
 
 	float* input = currentLayerMatrix->getArr();
-	float* output = currentLayer->getNext()->getLayerMatrix()->getArr();
+	float* output = currentLayer->getNext()->getLayer()->getArr();
 	float* current_input;
 	float* current_output;
 	gpuErrchk(cudaMalloc((void **) &current_input, currentLayerMatrix->getSize()));
@@ -214,7 +262,6 @@ void BasicLayer::calculateAndUpdateAllGPUV2() {
 		startingOutputID = 0;
 		numOutputsRemaining = numOutputs;
 		nextOutputID = weightsAddedLastSet;
-		int weightsAdded = 0;
 		
 		bool weightsFinished = false;
 		long long weightsUsed = 0;
@@ -237,7 +284,7 @@ void BasicLayer::calculateAndUpdateAllGPUV2() {
 			// start working on the next layer
 			else { 
 				if (currentLayer->getNext()->getNext() != nullptr) {
-					int nextNumWeights = numOutputs * currentLayer->getNext()->getNext()->getLayerMatrix()->getSize() / sizeof(float);
+					int nextNumWeights = numOutputs * currentLayer->getNext()->getNext()->getLayer()->getSize() / sizeof(float);
 					int nextMaxWeightIndex = currentLayer->getNext()->getWeights()->getWeightMatrix(0)->getSize() / sizeof(float);
 					if (nextMaxWeightIndex > nextNumWeights) {
 						nextMaxWeightIndex = nextNumWeights;
@@ -300,24 +347,24 @@ void BasicLayer::calculateAndUpdateAllGPUV2() {
 			next_weights = temp;
 
 		} while (!weightsFinished);
-
-		gpuErrchk(cudaMemcpy(output, current_output, numOutputs * sizeof(float), cudaMemcpyDeviceToHost));
 		
+		gpuErrchk(cudaMemcpy(output, current_output, numOutputs * sizeof(float), cudaMemcpyDeviceToHost));
+		// printArr(currentWeight->getWeightMatrix(currentWeightMatrixIndex - 1)->getArr(), 10);
 		Matrix3D* bias = currentLayer->getBias();
 		currentLayer = currentLayer->getNext();
-		currentLayerMatrix = currentLayer->getLayerMatrix();
+		currentLayerMatrix = currentLayer->getLayer();
 		currentWeight = currentLayer->getWeights();
 		numInputs = currentLayerMatrix->getSize() / sizeof(float);
 
 		if (currentLayer->getNext() != nullptr) {
-			output = currentLayer->getNext()->getLayerMatrix()->getArr();
-			numOutputs = currentLayer->getNext()->getLayerMatrix()->getSize() / sizeof(float);
+			output = currentLayer->getNext()->getLayer()->getArr();
+			numOutputs = currentLayer->getNext()->getLayer()->getSize() / sizeof(float);
 			numWeights = numInputs * numOutputs;
 			maxWeightIndex = currentLayer->weights->getWeightMatrix(0)->getSize();
 			numBlocks = numOutputs > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : numOutputs; // break the number of blocks into chunks of 16384 or less
 			numThreads = 512; // arbitrary
 			numPerThread = std::ceil ((double)maxWeightIndex / (numBlocks * numThreads));
-			output = currentLayer->getNext()->getLayerMatrix()->getArr();
+			output = currentLayer->getNext()->getLayer()->getArr();
 			gpuErrchk(cudaFree(next_weights));
 			gpuErrchk(cudaMalloc((void **) &next_weights, maxWeightIndex * sizeof(float)));
 			gpuErrchk(cudaFree(current_output));
@@ -325,8 +372,8 @@ void BasicLayer::calculateAndUpdateAllGPUV2() {
 			gpuErrchk(cudaMemset(current_output, 0b00000000, numOutputs * sizeof(float))); // set the output to zero
 		}
 		
-		*currentLayer->getLayerMatrix() += bias;
-		sigmoid(currentLayer->getLayerMatrix(), false);
+		*currentLayer->getLayer() += bias;
+		sigmoid(currentLayer->getLayer(), false);
 		gpuErrchk(cudaFree(current_input));
 		gpuErrchk(cudaMalloc((void **) &current_input, currentLayerMatrix->getSize()));
 		input = currentLayerMatrix->getArr();
@@ -334,16 +381,13 @@ void BasicLayer::calculateAndUpdateAllGPUV2() {
 
 		debugCounter++;
 	}
-
-
-
-
 	// :::: FREE ALL ALLOCATED MEMORY :::: //
 	gpuErrchk(cudaFree(current_input));	
 	gpuErrchk(cudaFree(current_output));
 	gpuErrchk(cudaFree(current_weights));	
 	gpuErrchk(cudaFree(next_weights));
-
+	gpuErrchk(cudaStreamDestroy(stream1));
+	gpuErrchk(cudaStreamDestroy(stream2));
 }
 
 // works as intended for small sets at least
@@ -391,8 +435,7 @@ void artificialIntelligence::classes::BasicLayer::calculateAndUpdateAllCPU () {
 // can be parallelized
 void BasicLayer::calculateAndUpdateLayerCPU () {
    // start with the first node, and add all of the values to a node then sigmoid
-
-   Matrix3D* nextLayer = this->next->getLayerMatrix();
+   Matrix3D* nextLayer = this->next->getLayer();
    Matrix3D* outputs = new Matrix3D (nextLayer->getLength(), nextLayer->getWidth(), nextLayer->getHeight());
 	outputs->setAll(0);
    if (isnan(*outputs->getData(0, 0, 0))) {
@@ -440,7 +483,7 @@ void BasicLayer::calculateAndUpdateLayerCPU () {
    }
 
    // set the next matrix to the layer that was just found
-   this->next->setLayerMatrix (outputs);
+   this->next->setLayer (outputs);
    delete outputs;
 
 }
@@ -451,28 +494,42 @@ void BasicLayer::setPrev (BasicLayer* prev) {
       delete this->prev;
    }
    this->prev = prev;
-}
+} 
 
 
-Matrix3D* BasicLayer::getLayerMatrix () {
+Matrix3D* BasicLayer::getLayer () const {
    return this->layerMatrix;
 }
 
 
-void BasicLayer::setLayerMatrix (Matrix3D* layerMatrix) {
+void BasicLayer::setLayer (Matrix3D* layerMatrix) {
    if (this->layerMatrix == nullptr) {
       this->layerMatrix = new Matrix3D (layerMatrix->getLength(), layerMatrix->getWidth(), layerMatrix->getHeight());
    }
    this->layerMatrix->setMatrix(layerMatrix);
 }
 
+void BasicLayer::setBias (Matrix3D* biasMatrix) {
+   if (this->biasMatrix == nullptr) {
+      this->biasMatrix = new Matrix3D (biasMatrix->getLength(), biasMatrix->getWidth(), biasMatrix->getHeight());
+   }
+   this->biasMatrix->setMatrix(biasMatrix);
+}
 
-BasicWeight* BasicLayer::getWeights () {
+void BasicLayer::setWeights (BasicWeight* weights) {
+   if (this->weights == nullptr) {
+      delete this->weights;
+   }
+   this->weights = weights;
+}
+
+
+BasicWeight* BasicLayer::getWeights () const {
 	return this->weights;
 }
 
 
-Matrix3D* BasicLayer::getBias () {
+Matrix3D* BasicLayer::getBias () const {
    return this->biasMatrix;
 }
 
@@ -493,12 +550,12 @@ BasicLayer* BasicLayer::getLast () {
 }
 
 
-BasicLayer* BasicLayer::getNext () {
+BasicLayer* BasicLayer::getNext () const {
    return this->next;
 }
 
 
-BasicLayer* BasicLayer::getPrev () {
+BasicLayer* BasicLayer::getPrev () const {
    return this->prev;
 }
 
@@ -509,7 +566,7 @@ Matrix3D* BasicLayer::calculateErrorCPU (Matrix3D* delta) {
 		for (int w = 0; w < currentLayerMatrix->getWidth(); w++) {
 			for (int h = 0; h < currentLayerMatrix->getHeight(); h++) {
 				// currentLayer->print(true, true);
-				Matrix3D* outputMatrix = this->getNext()->getLayerMatrix();
+				Matrix3D* outputMatrix = this->getNext()->getLayer();
 				Matrix3D* weightedMatrix = new Matrix3D (delta->getLength(), delta->getWidth(), delta->getHeight());
 				//*model->getRoot()->getWeights(l, w, h) * deltaPrev;
 				for (int l2 = 0; l2 < outputMatrix->getLength(); l2++) {
@@ -531,13 +588,12 @@ Matrix3D* BasicLayer::calculateErrorCPU (Matrix3D* delta) {
 
 Matrix3D* BasicLayer::calculateErrorGPU (Matrix3D* delta) {
 	BasicLayer* currentLayer = this;
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
+	Matrix3D* currentLayerMatrix = currentLayer->getLayer();
 
 	long long numInputs = currentLayerMatrix->getSize() / sizeof(float); // the number of blocks that will be generated
-	long long numOutputs = currentLayer->getNext()->getLayerMatrix()->getSize() / sizeof(float);
+	long long numOutputs = currentLayer->getNext()->getLayer()->getSize() / sizeof(float);
 	long long numWeights = numInputs * numOutputs;
 	long long numInputsRemaining = numInputs;
-	long long numWeightsRemaining = numWeights;
 	long long inputIndex = 0;
 	long long numBlocks = numInputs > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : numInputs; 
 	long long numThreads = 512; // arbitrary
@@ -547,7 +603,7 @@ Matrix3D* BasicLayer::calculateErrorGPU (Matrix3D* delta) {
 	if (maxWeightIndex > numWeights) {
 		maxWeightIndex = numWeights;
 	}
-	Matrix3D* errorMatrix = new Matrix3D(currentLayer->getLayerMatrix()->getLength(), currentLayer->getLayerMatrix()->getWidth(), currentLayer->getLayerMatrix()->getHeight());
+	Matrix3D* errorMatrix = new Matrix3D(currentLayer->getLayer()->getLength(), currentLayer->getLayer()->getWidth(), currentLayer->getLayer()->getHeight());
 	float* error = errorMatrix->getArr();
 	float* current_error;
 	float* current_delta;
@@ -563,9 +619,6 @@ Matrix3D* BasicLayer::calculateErrorGPU (Matrix3D* delta) {
 	
 	BasicWeight* currentWeight = currentLayer->getWeights();
 	long long matrixSize = currentWeight->weights->getSize() / sizeof(float);
-	long long numLeftToAdd = maxWeightIndex;
-	long long weightIndex = 0;
-	long long numLastAdded = 0;
 	long long currentWeightMatrixIndex = 0;
 	long long weightsAddedLastSet = 0;
 	long long weightsInCurrentKernelRun = 0;
@@ -593,7 +646,6 @@ Matrix3D* BasicLayer::calculateErrorGPU (Matrix3D* delta) {
 
 	int amountAdded = 0;
 	int weightsAdded = 0;
-	int currentWeightIndex = 0;
 
 	while (numberOfWeightsToAdd > 0) {
 		toAdd = weightsInCurrentMatrix > numberOfWeightsToAdd ? numberOfWeightsToAdd : weightsInCurrentMatrix;
@@ -624,15 +676,13 @@ Matrix3D* BasicLayer::calculateErrorGPU (Matrix3D* delta) {
 	weightsAddedLastSet = weightsAdded;
 	
 	int startingInputID = 0;
-	int nextInputID = maxWeightIndex % currentWeight->outputSize;
 	int numWeightsMatrixesLeft = std::ceil((float)numWeights / maxWeightIndex) - 1;
-	int debugCounter = 0;
+
 	// go through every single layer
 	numWeightsMatrixesLeft = std::ceil((float)numWeights / maxWeightIndex) - 1;
 	inputIndex = 0;
 	startingInputID = 0;
 	numInputsRemaining = numInputs;
-	nextInputID = weightsAddedLastSet;
 	bool weightsFinished = false;
 	long long weightsUsed = 0;
 	do {
@@ -719,6 +769,8 @@ Matrix3D* BasicLayer::calculateErrorGPU (Matrix3D* delta) {
 	gpuErrchk(cudaFree(current_delta));
 	gpuErrchk(cudaFree(current_weights));	
 	gpuErrchk(cudaFree(next_weights));
+	gpuErrchk(cudaStreamDestroy(stream1));
+	gpuErrchk(cudaStreamDestroy(stream2));
 	return errorMatrix;
 }
 
@@ -763,7 +815,7 @@ __global__ void artificialIntelligence::classes::calculateError(float* weights, 
 	}
 }
 
-Matrix3D* BasicLayer::updateWeightsCPU (Matrix3D* delta, double learningRate) {
+void BasicLayer::updateWeightsCPU (Matrix3D* delta, double learningRate) {
 	Matrix3D* currentLayerMatrix = this->layerMatrix;
 	for (int l = 0; l < currentLayerMatrix->getLength(); l++) {
 		for (int w = 0; w < currentLayerMatrix->getWidth(); w++) {
@@ -772,8 +824,7 @@ Matrix3D* BasicLayer::updateWeightsCPU (Matrix3D* delta, double learningRate) {
 				float inputValue = *currentLayerMatrix->getData(l, w, h);
 				float value = 0;
 				
-				Matrix3D* weightMatrix = this->getNext()->getLayerMatrix();
-				
+				Matrix3D* weightMatrix = this->getNext()->getLayer();
 				for (int l2 = 0; l2 < weightMatrix->getLength(); l2++) {
 					for (int w2 = 0; w2 < weightMatrix->getWidth(); w2++) {
 						for (int h2 = 0; h2 < weightMatrix->getHeight(); h2++) {
@@ -788,17 +839,15 @@ Matrix3D* BasicLayer::updateWeightsCPU (Matrix3D* delta, double learningRate) {
 }
 
 // updates weights one at a time, with each kernel doing maxWeightIndex weights
-Matrix3D* BasicLayer::updateWeightsGPU (Matrix3D* delta, double learningRate) {
+void BasicLayer::updateWeightsGPU (Matrix3D* delta, double learningRate) {
 	BasicLayer* currentLayer = this;
-	Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
+	Matrix3D* currentLayerMatrix = currentLayer->getLayer();
 
 	long long numInputs = currentLayerMatrix->getSize() / sizeof(float); // the number of blocks that will be generated
-	long long numOutputs = currentLayer->getNext()->getLayerMatrix()->getSize() / sizeof(float);
+	long long numOutputs = currentLayer->getNext()->getLayer()->getSize() / sizeof(float);
 	long long numWeights = numInputs * numOutputs;
-	long long numInputsRemaining = numInputs;
-	long long numWeightsRemaining = numWeights;
 	long long inputIndex = 0;
-	long long numBlocks = numInputs > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : numInputs; 
+	long long numBlocks = numOutputs > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : numOutputs; 
 	long long numThreads = 512; // arbitrary
 	long long maxWeightIndex = numBlocks * numOutputs;
 	long long numPerThread = std::ceil ((double)maxWeightIndex / (numBlocks * numThreads)); // number of weights per iteration
@@ -815,24 +864,18 @@ Matrix3D* BasicLayer::updateWeightsGPU (Matrix3D* delta, double learningRate) {
 
 	BasicWeight* currentWeight = currentLayer->getWeights();
 	long long matrixSize = currentWeight->weights->getSize() / sizeof(float);
-	long long numLeftToAdd = maxWeightIndex;
-	long long weightIndex = 0;
-	long long numLastAdded = 0;
 	long long currentWeightMatrixIndex = 0;
-	long long weightsAddedLastSet = 0;
 	long long weightsInCurrentKernelRun = 0;
-
-	int numberOfWeightsToAdd = maxWeightIndex;
+	
 	int weightsInCurrentMatrix = currentWeight->getWeightMatrix(0)->getSize() / sizeof(float);
 
-	int toAdd = weightsInCurrentMatrix > numberOfWeightsToAdd ? numberOfWeightsToAdd : weightsInCurrentMatrix;
 	// std::cout << "\ntoAdd: " <<  toAdd << "\n";
 	// std::cout << "numberOfWeightsToAdd: " <<  numberOfWeightsToAdd << "\n";
 	// std::cout << "weightsInCurrentMatrix: " <<  weightsInCurrentMatrix << "\n";
 	// std::cout << "currentWeightMatrixIndex: " <<  currentWeightMatrixIndex << "\n";
 
 
-	Matrix3D* inputMatrix = currentLayer->getLayerMatrix();
+	Matrix3D* inputMatrix = currentLayer->getLayer();
 	float* current_input;
 	float* current_delta;
 	gpuErrchk(cudaMalloc((void **) &current_input, inputMatrix->getSize()));
@@ -843,66 +886,78 @@ Matrix3D* BasicLayer::updateWeightsGPU (Matrix3D* delta, double learningRate) {
 
 	float* current_weights;
 	float* next_weights;
-	gpuErrchk(cudaMalloc((void **) &current_weights, currentWeight->getWeightMatrix(0)->getSize() / sizeof(float)));
-	gpuErrchk(cudaMemcpy(current_weights, currentWeight->getWeightMatrix(0), currentWeight->getWeightMatrix(0)->getSize() / sizeof(float), cudaMemcpyHostToDevice));
+	gpuErrchk(cudaMalloc((void **) &current_weights, currentWeight->getWeightMatrix(0)->getSize()));
+	gpuErrchk(cudaMalloc((void **) &next_weights, currentWeight->getWeightMatrix(0)->getSize()));
+	gpuErrchk(cudaMemcpy(current_weights, currentWeight->getWeightMatrix(0)->getArr(), currentWeight->getWeightMatrix(0)->getSize(), cudaMemcpyHostToDevice));
+	weightsInCurrentKernelRun = currentWeight->getWeightMatrix(0)->getSize() / sizeof(float);
 
-	int numWeightsAdded = 0;
-	
-	int weightsUsed = 0;
+	long long weightsUsed = 0;
 	int startingInputId = 0;
-	while (numWeights - weightsUsed > 0){
+	while ((numWeights - weightsUsed) != 0) {
 		// std::cout << "inside22\n";
 		// std::cout << "numBlocks: " << numBlocks << '\n';
-		// std::cout << "numInputs: " << numInputs << '\n';
+		// std::cout << "numOutputs: " << numOutputs << '\n';
 		// std::cout << "numPerThread: " << numPerThread << '\n';
 		// std::cout << "weightsInCurrentKernelRun: " << weightsInCurrentKernelRun << "\n";
-		// std::cout << "numInputsRemaining: " << numInputsRemaining << '\n';
+		// std::cout << "numOutputsRemaining: " << numOutputsRemaining << '\n';
 		// std::cout << "weightsUsed: " << weightsUsed << "\n";
-		// std::cout << "startingInputID: " << startingInputID << "\n\n";
-
-		if (numInputsRemaining - numBlocks < 0) {
-			numBlocks = numInputsRemaining;
-		}
+		// std::cout << "startingInputId: " << startingInputId << "\n\n";
 
 		// needs to make it so that the first x inputs are all added together by the blocks that exist. 
 		
 		artificialIntelligence::classes::updateWeights<<<numBlocks, numThreads, sharedSize, stream1>>>(current_weights, current_delta, current_input, numInputs, numOutputs, numPerThread, weightsInCurrentKernelRun, numWeights, weightsUsed, startingInputId, learningRate);
 		inputIndex += numBlocks;
-		numInputsRemaining -= numBlocks;
+		
+		startingInputId = weightsUsed / numOutputs;
 
 		weightsUsed += currentWeight->getWeightMatrix(currentWeightMatrixIndex)->getSize() / sizeof(float);
 
 		// add more weights if they exist
 		currentWeightMatrixIndex++;
-		if (numWeights - weightsUsed > 0) {
-			gpuErrchk(cudaMalloc((void **) &next_weights, currentWeight->getWeightMatrix(currentWeightMatrixIndex)->getSize() / sizeof(float)));
-			gpuErrchk(cudaMemcpy(next_weights, currentWeight->getWeightMatrix(currentWeightMatrixIndex), currentWeight->getWeightMatrix(0)->getSize() / sizeof(float), cudaMemcpyHostToDevice));
+		if ((numWeights - weightsUsed) != 0) {
+			gpuErrchk(cudaMemcpyAsync(next_weights, currentWeight->getWeightMatrix(currentWeightMatrixIndex)->getArr(), currentWeight->getWeightMatrix(currentWeightMatrixIndex)->getSize(), cudaMemcpyHostToDevice));
+			weightsInCurrentKernelRun = currentWeight->getWeightMatrix(currentWeightMatrixIndex)->getSize() / sizeof(float);
 		}
 
 		// bring weights back
+		// currentWeight->getWeightMatrix(currentWeightMatrixIndex - 1)->printMatrix();
 		gpuErrchk(cudaDeviceSynchronize());
-		gpuErrchk(cudaMemcpy(currentWeight->getWeightMatrix(currentWeightMatrixIndex - 1), current_weights, currentWeight->getWeightMatrix(0)->getSize() / sizeof(float), cudaMemcpyHostToDevice));
+		gpuErrchk(cudaMemcpy(currentWeight->getWeightMatrix(currentWeightMatrixIndex - 1)->getArr(), current_weights, currentWeight->getWeightMatrix(currentWeightMatrixIndex - 1)->getSize(), cudaMemcpyDeviceToHost));
 
 		float* temp = current_weights;
 		current_weights = next_weights;
 		next_weights = temp;
+
+		// std::cout << ((numWeights - weightsUsed) != 0) << '\n';
+		// std::cout << "numWeights: " << numWeights << "\n";
+		// std::cout << "weightsUsed: " << weightsUsed << "\n\n";
+		// currentWeight->getWeightMatrix(currentWeightMatrixIndex - 1)->printMatrix();
 	}
+
+	gpuErrchk(cudaFree(current_input));
+	gpuErrchk(cudaFree(current_delta));
+	gpuErrchk(cudaFree(current_weights));	
+	gpuErrchk(cudaFree(next_weights));
+	gpuErrchk(cudaStreamDestroy(stream1));
+	gpuErrchk(cudaStreamDestroy(stream2));
 }
 
 __global__ void artificialIntelligence::classes::updateWeights(float* weights, float* delta, float* input, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingInputID, double learningRate) {
 	extern __shared__ float sdata[];
 	unsigned int tid = threadIdx.x;
 	unsigned int numThreads = blockDim.x;
-	unsigned long long inputNodeId = blockIdx.x + startingInputID;
-	unsigned long long outputNodeId = 0;
-	unsigned long long weightIndex = tid + blockIdx.x * outputSize;
-	unsigned int gridSize = numThreads;
-	int weightsToAddStart = outputSize * (blockIdx.x);
-	int weightsToAddEnd = outputSize * (blockIdx.x + 1);
-
-	while (weightIndex >= weightsToAddStart && weightIndex < weightsToAddEnd) {
+	unsigned long long weightIndex = tid + numThreads * blockIdx.x;
+	unsigned long long outputNodeId = (weightIndex + startingWeight) % outputSize;
+	unsigned long long inputNodeId = (weightIndex + startingWeight) / outputSize;
+	unsigned int gridSize = numThreads * gridDim.x;
+	while (weightIndex < maxWeightIndex) {
+		// printf ("inputNodeId %llu\n", inputNodeId);
 		weights[weightIndex] += input[inputNodeId] * delta[outputNodeId] * learningRate;
+
+		// printf ("weights %f\n", weights[weightIndex]);
 		weightIndex += gridSize;
+		inputNodeId = (weightIndex + startingWeight) / outputSize;
+		outputNodeId = (weightIndex + startingWeight) % outputSize;
 	}
 }
 // weight[weightIndex] + currentLayer input[value] * deltaPrev [output value] * learningRate
@@ -910,8 +965,11 @@ __global__ void artificialIntelligence::classes::updateWeights(float* weights, f
 // return weights
 
 
-
+// 24 bytes are input and bias layer sizes
+// bias bytes are afterwards
+// 
 void BasicLayer::toFile (std::ofstream* outputFile) {
+	char* output = new char[sizeof(int) * 6];
    *outputFile << this->layerMatrix->getLength() << ',' << this->layerMatrix->getWidth() << ',' << this->layerMatrix->getHeight() << '\n';
 
    // print bias values
@@ -937,22 +995,39 @@ void BasicLayer::toFile (std::ofstream* outputFile) {
    // print weight values
    *outputFile << this->layerMatrix->getLength() << ',' << this->layerMatrix->getWidth() << ',' << this->layerMatrix->getHeight() << ',';
    *outputFile << this->biasMatrix->getLength() << ',' << this->biasMatrix->getWidth() << ',' << this->biasMatrix->getHeight() << '\n';
-   for (int l = 0; l < this->layerMatrix->getLength(); l++) {
-      for (int w = 0; w < this->layerMatrix->getWidth(); w++) {
-         for (int h = 0; h < this->layerMatrix->getHeight(); h++) {
-            for (int l2 = 0; l2 < this->biasMatrix->getLength(); l2++) {
-               for (int w2 = 0; w2 < this->biasMatrix->getWidth(); w2++) {
-                  for (int h2 = 0; h2 < this->biasMatrix->getHeight(); h2++) {
-                     *outputFile << *this->weights->getData(l, w, h, l2, w2, h2) << ',';
-                  }
-               }
-            }
-         }
-      }
-   }
+
+	int currentWeightMatrix = 0;
+	float* weights;
+	
+	int concatSize = sizeof(float) + sizeof(char);
+	char comma = ',';
+	while (this->weights->getWeightMatrix(currentWeightMatrix) != nullptr) {
+		int size = this->weights->getWeightMatrix(currentWeightMatrix)->getSize() + sizeof(float);
+		char* output = new char[size];
+		char* ptr = output;
+
+		// std::cout << this->weights->getWeightMatrix(currentWeightMatrix)->getSize() / sizeof(float) << '\n';
+		// std::cout << size << '\n';
+		// exit(0);
+
+		weights = this->weights->getWeightMatrix(currentWeightMatrix)->getArr();
+		for (int i = 0, cc = this->weights->getWeightMatrix(currentWeightMatrix)->getSize() / sizeof(float); i < cc; i++) {
+			// std::cout << ptrVal << "i: " << i << '\n';
+			// std::cout << this->weights->getWeightMatrix(currentWeightMatrix)->getSize() / sizeof(float);
+			memcpy(ptr, &weights[i], sizeof(float));
+			ptr += sizeof(float);
+		}
+		outputFile->write(output, size);
+		currentWeightMatrix++;
+
+		free(output);
+		// for (int i = 0, cc = this->weights->getWeightMatrix(currentWeightMatrix)->getSize() / sizeof(float); i < cc; i++) {
+		// 	*outputFile << weights[i] << ',';
+		// }
+	}
 
    outputFile->seekp((int) outputFile->tellp() - 1);
-   outputFile->write("\n", 1); 
+   outputFile->write("\n", 1);
 
    if (this->next == nullptr) {
       return;
@@ -962,6 +1037,7 @@ void BasicLayer::toFile (std::ofstream* outputFile) {
 
 
 BasicLayer* BasicLayer::loadFromFile (std::ifstream* inputFile, BasicLayer* prev) {
+	std::cout << "Loading layer from file\n";
    BasicLayer* layer = new BasicLayer ();
    std::string line;
    getline (*inputFile, line);
@@ -969,10 +1045,13 @@ BasicLayer* BasicLayer::loadFromFile (std::ifstream* inputFile, BasicLayer* prev
    lineStream << line;
    std::string value;
    getline(lineStream, value, ',');
+	std::cout << "v1: " << value << '\n';
    int layerLength = stoi(value);
    getline(lineStream, value, ',');
+	std::cout << "v2: " << value << '\n';
    int layerWidth = stoi(value);
    getline(lineStream, value, ',');
+	std::cout << "v3: " << value << '\n';
    int layerHeight = stoi(value);
    Matrix3D* layerMatrix = new Matrix3D (layerLength, layerWidth, layerHeight);
    layer->layerMatrix = layerMatrix;
@@ -1025,29 +1104,29 @@ BasicLayer* BasicLayer::loadFromFile (std::ifstream* inputFile, BasicLayer* prev
       layer->layerMatrix->getHeight(), 
       layer->biasMatrix->getLength(), 
       layer->biasMatrix->getWidth(), 
-      layer->biasMatrix->getHeight()
+      layer->biasMatrix->getHeight(),
+		false
    );
 
    
    lineStream.str(std::string());
    lineStream.clear();
-   getline (*inputFile, line);
-   lineStream << line;
+   // getline (*inputFile, line);
+   // lineStream << line;
    // ./te (0);
-   for (int l = 0; l < layerLength; l++) {
-      for (int w = 0; w < layerWidth; w++) {
-         for (int h = 0; h < layerHeight; h++) {
-            for (int l2 = 0; l2 < biasLength; l2++) {
-               for (int w2 = 0; w2 < biasWidth; w2++) {
-                  for (int h2 = 0; h2 < biasHeight; h2++) {
-                     std::getline(lineStream, value, ',');
-                     weights->insertData(stod(value), l, w, h, l2, w2, h2);
-                  }
-               }
-            }
-         }
-      }
-   }
+	std::cout << "Inserting weights\n";
+
+	// take first weight matrix size
+	int currentWeightMatrix = 0;
+	// std::cout << ((int) inputFile->tellg()) << '\n';
+	// exit(0);
+	while (weights->getWeightMatrix(currentWeightMatrix) != nullptr) {
+		inputFile->read((char*) weights->getWeightMatrix(currentWeightMatrix)->getArr(), weights->getWeightMatrix(currentWeightMatrix)->getSize());
+		currentWeightMatrix++;
+	}
+	getline(*inputFile, line);
+
+	std::cout << "Finished weights\n";
 
    layer->weights = weights;
    layer->next = BasicLayer::loadFromFile (inputFile, layer);

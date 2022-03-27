@@ -24,6 +24,11 @@ BasicLayerList::~BasicLayerList() {
 	delete this->root;
 }
 
+BasicLayerList::BasicLayerList(const BasicLayerList& bll) {
+	this->root = new BasicLayer(*bll.root);
+	this->last = this->root->getLast();
+}
+
 void BasicLayerList::print (bool printBias, bool printWeights) {
    if (this->root != nullptr) {
       int depth = this->root->print(printBias, printWeights);
@@ -46,7 +51,7 @@ void BasicLayerList::add (Matrix3D* layerMatrix, Matrix3D* biasMatrix, BasicWeig
 
 void BasicLayerList::editRootMatrix (Matrix3D* newMatrix) {
    if (this->root != nullptr) {
-      this->root->setLayerMatrix(newMatrix);
+      this->root->setLayer(newMatrix);
    }
 }
 

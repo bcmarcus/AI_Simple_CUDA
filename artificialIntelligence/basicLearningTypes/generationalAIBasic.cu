@@ -4,10 +4,13 @@
 #include <cmath>
 #include <sys/resource.h>
 
-#include <coreutils/classes/matrixes/Matrix3D.cuh>
 #include <artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp>
 #include <artificialIntelligence/basicLearningTypes/generationalAIBasic.cuh>
 #include <artificialIntelligence/functions/activationFunctions.cuh>
+
+#include <coreutils/classes/matrixes/Matrix3D.cuh>
+
+#include <coreutils/util/cudaErrors.cuh>
 
 #include <coreutils/functions/math/simpleMath.hpp>
 #include <coreutils/functions/sort/sortHelpers.cpp>
@@ -17,6 +20,8 @@
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
 
 #include <device_launch_parameters.h>
+
+#define GPU 1
 
 using namespace coreutils::classes::matrixes;
 using namespace coreutils::functions;
@@ -35,18 +40,20 @@ namespace artificialIntelligence {
             std::cout.precision(4);
 
             double sumInitial = 0;
-            if (calculateError) {
-               for (int i = 0; i < inputCount; i++) {
-                  list->editRootMatrix(inputDataMatrixes[i]);
-                  list->calculateAndUpdateAllGPUV2();
-                  Matrix3D* error = *outputDataMatrixes[i] - list->getLast()->getLayerMatrix();
-                  Matrix3D* squared = *error * error;
-                  sumInitial += squared->sum() * 100;
-                  delete error;
-                  delete squared;
-               }
-               std::cout << "Total initial error :: " << sumInitial << "%\n\n";
-            }
+            // if (calculateError) {
+				// 	std::cout << "Calculating Initial Error.\n";
+            //    for (int i = 0; i < inputCount; i++) {
+            //       list->editRootMatrix(inputDataMatrixes[i]);
+				// 		if (GPU) { list->calculateAndUpdateAllGPUV2(); }
+				// 		else { list->calculateAndUpdateAllCPU(); }
+            //       Matrix3D* error = *outputDataMatrixes[i] - list->getLast()->getLayer();
+            //       Matrix3D* squared = *error * error;
+            //       sumInitial += squared->sum() * 100;
+            //       delete error;
+            //       delete squared;
+            //    }
+            //    std::cout << "Total initial error :: " << sumInitial << "%\n\n";
+            // }
 				
             int* order = new int[inputCount];
             for (int i = 0; i < inputCount; i++) {
@@ -54,22 +61,31 @@ namespace artificialIntelligence {
             }
    
             // main loop
-
+				float initialError = 0;
             std::cout << std::fixed;
 				std::cout.precision(2);
-            // exit (0);
             for (int e = 0; e < epochs; e++) {
                // because stochastic gradient descent, the order needs randomization
 
+					// debug::printArr(order, 10);
                sort::shuffle(order, inputCount);
-               
-               std::cout << e / (double) epochs * 100 << "%\n";
+               // debug::printArr(order, 10);
                 
                if (calculateError) {
                   float currentError = 0;
+						std::cout << "Calculating error.\n";
                   for (int i = 0; i < inputCount; i++) {
                      list->editRootMatrix(inputDataMatrixes[i]);
-                     list->calculateAndUpdateAllGPUV2();
+							if (GPU) { list->calculateAndUpdateAllGPUV2(); }
+							else { list->calculateAndUpdateAllCPU(); }
+							Matrix3D* error = *outputDataMatrixes[i] - list->getLast()->getLayer();
+							Matrix3D* squared = *error * error;
+							currentError += squared->sum() * 100;
+							delete error;
+							delete squared;
+						}
+						if (initialError < 1) {
+							initialError = currentError;
 						}
                   std::cout << "Total error :: " << currentError << "%\n\n";
                }
@@ -98,23 +114,68 @@ namespace artificialIntelligence {
                //    cout << "Output Matrix " << i << ":";
                //    outputDataMatrixes[order[i]]->printMatrix();
                // }
-               // exit (0);
+
                for (int i = 0; i < inputCount; i++) {
-                  
                   // update the list with random input
                   list->editRootMatrix(inputDataMatrixes[order[i]]);
-                  list->calculateAndUpdateAllGPUV2();
-                  
+						if (isnan(*list->getLast()->getLayer()->getData(0,0,0))) {
+							list->getLast()->getLayer()->printMatrix();
+							std::cout << "Float error, not a number 7\n";
+							if (print) {
+								list->print(0, 0);
+							}
+							exit (0);
+						}
+                  if (GPU) { list->calculateAndUpdateAllGPUV2(); }
+						else { list->calculateAndUpdateAllCPU(); }
+						if (isnan(*list->getLast()->getLayer()->getData(0,0,0))) {
+							list->getLast()->getLayer()->printMatrix();
+							std::cout << "Float error, not a number 8\n";
+							if (print) {
+								list->print(0, 0);
+							}
+							exit (0);
+						}
+						if (inputCount < 100 || i % (inputCount / 100) == 0) {
+							printf("%2.2f", e / (double) epochs * 100 + ((float) i / inputCount) / epochs * 100);
+							std::cout << "%\n";
+						}
+
+						// exit(0);
+                  // std::cout << "i: " << i << "   order[i]: " << order[i] << '\n';
                   // backpropagation starts at root
+						
                   BasicLayer* currentLayer = list->getLast();
 
                   // do math for deltaOutput
-                  Matrix3D* currentLayerMatrix = currentLayer->getLayerMatrix();
+                  Matrix3D* currentLayerMatrix = currentLayer->getLayer();
                   Matrix3D* error = *(outputDataMatrixes[order[i]]) - currentLayerMatrix;
+						// outputDataMatrixes[order[i]]->printMatrix();
+						
                   Matrix3D* dSig = dSigmoid (currentLayerMatrix);
                   Matrix3D* deltaNext = *error * (dSig);
                   Matrix3D* deltaPrev = new Matrix3D (deltaNext->getLength(), deltaNext->getWidth(), deltaNext->getHeight());
-
+						
+						if (isnan(*error->getData(0,0,0))) {
+							outputDataMatrixes[order[i]]->printMatrix();
+							currentLayerMatrix->printMatrix();
+							dSig->printMatrix();
+							std::cout << "Float error, not a number 4\n";
+							if (print) {
+								list->print(0, 0);
+								deltaPrev->printMatrix();
+							}
+							exit (0);
+						}
+						if (isnan(*dSig->getData(0,0,0))) {
+							currentLayerMatrix->printMatrix();
+							std::cout << "Float error, not a number 1\n";
+							if (print) {
+								list->print(0, 0);
+								deltaPrev->printMatrix();
+							}
+							exit (0);
+						}
                   delete error;
                   delete dSig;
 
@@ -124,14 +185,15 @@ namespace artificialIntelligence {
                   currentLayer = currentLayer->getPrev();
                   
                   int counter = 0;
-                  // list->print(true, true);
-                  while (currentLayer->getPrev() != nullptr) {
 
+
+                  while (currentLayer->getPrev() != nullptr) {
+							
                      // counter for debuggin
                      counter++;
-
+							
                      // get the layerMatrix
-                     currentLayerMatrix = currentLayer->getLayerMatrix();
+                     currentLayerMatrix = currentLayer->getLayer();
 
 							int currentLength = currentLayerMatrix->getLength();
 							int currentWidth = currentLayerMatrix->getWidth();
@@ -140,16 +202,38 @@ namespace artificialIntelligence {
                      delete deltaPrev;
                      deltaPrev = new Matrix3D (deltaNext->getLength(), deltaNext->getWidth(), deltaNext->getHeight());
                      deltaPrev->setMatrix(deltaNext);
-                   
+							
 							// error = new Matrix3D (currentLength, currentWidth, currentHeight);
 							
 							// calculates the impact of each node and puts it into the weighted matrix. This is used to calculate error
 
-							error = currentLayer->calculateError(deltaPrev);
+							if (GPU) { error = currentLayer->calculateErrorGPU(deltaPrev); }
+							else { error = currentLayer->calculateErrorCPU(deltaPrev); }
 
                      delete deltaNext;
                      dSig = dSigmoid (currentLayerMatrix);
                      deltaNext = *error * (dSig);
+							if (isnan(*dSig->getData(0,0,0))) {
+								currentLayerMatrix->printMatrix();
+								std::cout << "Float error, not a number 5\n";
+								if (print) {
+									list->print(0, 0);
+									deltaPrev->printMatrix();
+								}
+								exit (0);
+							}
+							if (isnan(*error->getData(0,0,0))) {
+								outputDataMatrixes[order[i]]->printMatrix();
+								currentLayerMatrix->printMatrix();
+								dSig->printMatrix();
+								std::cout << "Float error, not a number 6\n";
+								if (print) {
+									list->print(0, 0);
+									deltaPrev->printMatrix();
+								}
+								exit (0);
+							}
+
                      delete error;
                      delete dSig;
 
@@ -162,17 +246,37 @@ namespace artificialIntelligence {
                      delete bias;
 
                      // <--> //
+							// BasicLayer *tempLayer = new BasicLayer(*currentLayer, true);
+							// tempLayer->updateWeightsCPU(deltaPrev, learningRate);
+							if (GPU) { currentLayer->updateWeightsGPU(deltaPrev, learningRate); }
+							else { currentLayer->updateWeightsCPU(deltaPrev, learningRate); }
+// tempLayer->print(1,1);
+// currentLayer->print(1,1);
+// exit(0);
+							if (isnan (*list->getLast()->getLayer()->getData(0,0,0))) {
+								std::cout << "Float error, not a number 3\n";
+								if (print) {
+									list->print(0, 0);
+									deltaPrev->printMatrix();
+								}
+								exit (0);
+							}
 
                      currentLayer = currentLayer->getPrev();
                   }
-
+						
                   delete deltaNext;
                   delete deltaPrev;
+
+						// std::cout << "here1\n";
+						// gpuErrchk(cudaDeviceReset());
+						// std::cout << "here2\n";
                }
 
                // list->getLast()->print();
-               if (isnan (*list->getLast()->getLayerMatrix()->getData(0,0,0))) {
-                  std::cout << "here2";
+               if (isnan (*list->getLast()->getLayer()->getData(0,0,0))) {
+						list->print(1,1);
+                  std::cout << "here2\n";
                   exit (0);
                }
             }
@@ -195,13 +299,11 @@ namespace artificialIntelligence {
                   outputDataMatrixes[i]->printMatrix();
                   list->editRootMatrix(inputDataMatrixes[i]);
 
-                  // std::cout << "before";
-                  // list->print(true, true);
-                  list->calculateAndUpdateAllGPUV2();
-                  // std::cout << "after";
-                  // list->print();
+                  if (GPU) { list->calculateAndUpdateAllGPUV2(); }
+						else { list->calculateAndUpdateAllCPU(); }
+						
                   std::cout << "Calculated Output: ";
-                  list->getLast()->getLayerMatrix()->printMatrix();
+                  list->getLast()->getLayer()->printMatrix();
                   std::cout << "\n\n";
                }
             }
@@ -210,16 +312,18 @@ namespace artificialIntelligence {
             std::cout.precision(4);
             if (calculateError) {
                double sumFinal = 0;
+					std::cout << "Calculating final error\n";
                for (int i = 0; i < inputCount; i++) {
                   list->editRootMatrix(inputDataMatrixes[i]);
-                  list->calculateAndUpdateAllGPUV2();
-                  Matrix3D* error = *outputDataMatrixes[i] - list->getLast()->getLayerMatrix();
+                  if (GPU) { list->calculateAndUpdateAllGPUV2(); }
+						else { list->calculateAndUpdateAllCPU(); }
+                  Matrix3D* error = *outputDataMatrixes[i] - list->getLast()->getLayer();
                   Matrix3D* squared = *error * error;
                   sumFinal += squared->sum() * 100;
                   delete error;
                   delete squared;
                }
-               std::cout << "Total initial error :: " << sumInitial << "%\n";
+					std::cout << "Total initial error :: " << initialError << "%\n";
                std::cout << "Total final error :: " << sumFinal << "%\n";
             }
 

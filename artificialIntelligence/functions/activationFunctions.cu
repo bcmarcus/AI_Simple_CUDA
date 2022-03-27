@@ -10,11 +10,23 @@ namespace artificialIntelligence {
 
          double sigmoid(double x) 
          { 
+				if (x > 20) {
+					return 1;
+				}
+				if (x < 0.000001 && x > -0.000001) {
+					return 0.5;
+				}
             return 1 / (1 + exp(-x)); 
          }
 
          double dSigmoid(double x) 
-         { 
+         {
+				if (x > 20) {
+					return 0;
+				}
+				if (x < 0.000001 && x > -0.000001) {
+					return 0.25;
+				}
             return sigmoid(x) * (1 - sigmoid(x));
          }
          
@@ -94,6 +106,9 @@ namespace artificialIntelligence {
 
 
 			__device__ double device_sigmoid(double x) {
+				if (x > 20) {
+					return 1;
+				}
 				return 1 / (1 + expf(-x));
 			}
 

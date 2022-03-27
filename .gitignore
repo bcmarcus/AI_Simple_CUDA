@@ -2,3 +2,6 @@
 *.png
 *.o
 *.out
+*.jpg
+*.jpeg
+*.ppm

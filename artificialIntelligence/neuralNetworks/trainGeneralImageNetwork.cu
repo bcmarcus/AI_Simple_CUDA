@@ -1,5 +1,5 @@
-//    ./trainGeneralImageNetwork -t RGB -d /../data/images/dataset/dataset -a /../data/images/dataset/animalAnswerFile.txt -o /../data/images/dataset/animalTrainedModel1.csv -h 5 -w 5
-//    ./trainGeneralImageNetwork -t RGB -d /../data/mnist_png/mnist_png/smallTesting -a /../data/mnist_png/mnist_png/indexToAnswerFile.txt -o /../data/mnist_png/mnist_png/mnistTrainedModel1.csv -h 5 -w 5
+//    ./trainGeneralImageNetwork.out -t RGB -d /../data/dataset/dataset -a /../data/dataset/animalAnswerFile.txt -o /../data/dataset/animalTrainedModel1.csv -l 1 -w 5 -h 5
+//    ./trainGeneralImageNetwork.out -t RGB -d /../data/mnist_png/mnist_png/smallTesting -a /../data/mnist_png/mnist_png/indexToAnswerFile.txt -o /../data/mnist_png/mnist_png/mnistTrainedModel1.csv -l 1 -w 5 -h 5
 
 
 #include <string>
@@ -11,14 +11,16 @@
 #include <sys/resource.h>
 #include <vector>
 
-#include <artificialIntelligence/functions/images/generateInput.hpp>
+#include <imageEdit/generate/generateInput.hpp>
 #include <artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp>
 #include <artificialIntelligence/classes/BasicLayerList.hpp>
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
+#include <coreutils/functions/debug/print.cpp>
 
 using namespace std;
-using namespace artificialIntelligence::functions;
+using namespace imageEdit;
 using namespace coreutils::classes::matrixes;
+using namespace coreutils::functions;
 
 void loadImages (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size);
 
@@ -118,6 +120,7 @@ int main (int argc, char *argv[]) {
 
    std::cout << "100.00 percent of the images have been loaded\n";
 
+	std::cout << "Generating Model Layer 1 of " << layerCount << ".\n";
    BasicLayerList* model = new artificialIntelligence::classes::BasicLayerList ();
 	
    // input layer
@@ -126,23 +129,26 @@ int main (int argc, char *argv[]) {
 
    // hidden layers
    for (int i = 0; i < layerCount - 2; i++) {
+		std::cout << "Generating Model Layer " << i + 2 << " of " << layerCount << ".\n";
       model->addNew (hiddenLayerLength, hiddenLayerWidth, hiddenLayerHeight);
    }
    
 
-	
+	std::cout << "Generating Model Layer " << layerCount << " of " << layerCount << ".\n";
    // this is the output layer
    model->addNew (outputMatrixes[0]->getLength(), outputMatrixes[0]->getWidth(), outputMatrixes[0]->getHeight());
 
+	std::cout << "Model Generated.\n\n";
    // model->getRoot()->getLayerMatrix()->printMatrix();
    // model->getLast()->getLayerMatrix()->printMatrix();
    // std::cout << "epochs: " << epochs << '\n';
    // std::cout << "learningRate: " << learningRate << '\n';
    // std::cout << "inputCount: " << inputCount << '\n';
-   // model->print();
-
-   artificialIntelligence::basicLearningTypes::generationalAIBasic::run(model, epochs, learningRate, inputMatrixes, outputMatrixes, inputCount);
-
+   // model->print(true, true);
+	// exit(0);
+	model->print(1,1);
+   artificialIntelligence::basicLearningTypes::generationalAIBasic::run(model, epochs, learningRate, inputMatrixes, outputMatrixes, inputCount, false, false);
+	// model->print(1,1);
    model->toFile (outputFile);
 
    int final = time(0) - startTime;
@@ -170,7 +176,7 @@ void loadImagesHelper (std::string inputImageFolder, Matrix3D **inputMatrixes, M
    }
    if (!std::filesystem::is_directory(inputImageFolder)) {
       std::cout << "name: " << inputImageFolder << " "; 
-      images::generate::inputMatrixNormalized(inputImageFolder, inputMatrixes, *index, type);
+      generate::inputMatrixNormalized(inputImageFolder, inputMatrixes, *index, type);
 
       // make the output
       Matrix3D* output = new Matrix3D (1, 1, answerToIndex.size());
@@ -189,14 +195,13 @@ void loadImagesHelper (std::string inputImageFolder, Matrix3D **inputMatrixes, M
 
 int countImages(std::string inputImageFolder, std::string indexToAnswerPath, map<std::string, int>& answerToIndex) {
    ofstream indexToAnswerFile (indexToAnswerPath);
-   std::cout << indexToAnswerPath;
+   std::cout << indexToAnswerPath << "\n";
    if (!indexToAnswerFile.good()){
       std::cout << "Index to answer file path failure.\n";
       exit (EXIT_FAILURE);
    }
-   int* index = new int(0);
-   std::cout << *index << '\n';
-   return countImagesHelper(inputImageFolder, indexToAnswerFile, answerToIndex, index);
+   int index = 0;
+   return countImagesHelper(inputImageFolder, indexToAnswerFile, answerToIndex, &index);
 }
 
 int countImagesHelper (std::string inputImageFolder, ofstream &indexToAnswerFile, map<std::string, int>& answerToIndex, int* index) {

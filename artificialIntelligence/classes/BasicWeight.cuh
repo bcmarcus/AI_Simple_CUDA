@@ -10,7 +10,7 @@ using namespace coreutils::classes::matrixes;
 
 #define BASIC_WEIGHT_MAX_SIZE (1024*1024*256)
 
-// #define BASIC_WEIGHT_MAX_SIZE (4)
+// #define BASIC_WEIGHT_MAX_SIZE (1024*1024)
 namespace artificialIntelligence {
    namespace classes {
 
@@ -20,17 +20,21 @@ namespace artificialIntelligence {
             
             // generates weights going from of size fl, fw, fh to layer of size sl, sw, sh
             // names correspond to first, second, length, width, height
-            BasicWeight (int fl, int fw, int fh, int sl, int sw, int sh);
+            BasicWeight (int fl, int fw, int fh, int sl, int sw, int sh, bool randomize = true);
 
-				void build(int outputSize, int size, int toAdd, int length, int width, int height, int outputLength, int outputWidth, int outputHeight);
+				void build(int outputSize, int size, int toAdd, int length, int width, int height, int outputLength, int outputWidth, int outputHeight, bool randomize);
 
-				BasicWeight (int size, int fl, int fh, int fw, int sl, int sw, int sh);
+				void build(int outputSize, int size, int length, int width, int height, int outputLength, int outputWidth, int outputHeight, const Matrix3D& inputMatrix);
+
+				// BasicWeight (int size, int fl, int fh, int fw, int sl, int sw, int sh);
 
 				BasicWeight ();
 
             ~BasicWeight ();
 
-				Matrix3D* getWeightMatrix (int index);
+				BasicWeight(const BasicWeight &w1);
+
+				Matrix3D* getWeightMatrix (int index) const;
 
 				long long getIndex (int fl, int fw, int fh, int sl, int sw, int sh);
 
