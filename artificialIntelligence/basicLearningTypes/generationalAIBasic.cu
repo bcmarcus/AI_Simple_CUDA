@@ -35,45 +35,31 @@ namespace artificialIntelligence {
 
          void run (BasicLayerList* list, int epochs, double learningRate, Matrix3D** inputDataMatrixes, Matrix3D** outputDataMatrixes, int inputCount, bool calculateError, bool print) {
 
-            // initial error
+            // set printing values
+            std::cout << std::fixed;
+				std::cout.precision(2);
 
-            std::cout.precision(4);
-
-            double sumInitial = 0;
-            // if (calculateError) {
-				// 	std::cout << "Calculating Initial Error.\n";
-            //    for (int i = 0; i < inputCount; i++) {
-            //       list->editRootMatrix(inputDataMatrixes[i]);
-				// 		if (GPU) { list->calculateAndUpdateAllGPUV2(); }
-				// 		else { list->calculateAndUpdateAllCPU(); }
-            //       Matrix3D* error = *outputDataMatrixes[i] - list->getLast()->getLayer();
-            //       Matrix3D* squared = *error * error;
-            //       sumInitial += squared->sum() * 100;
-            //       delete error;
-            //       delete squared;
-            //    }
-            //    std::cout << "Total initial error :: " << sumInitial << "%\n\n";
-            // }
-				
+            // generate the random order that the data will be chosen in
             int* order = new int[inputCount];
             for (int i = 0; i < inputCount; i++) {
                order[i] = i;
             }
-   
-            // main loop
-				float initialError = 0;
-            std::cout << std::fixed;
-				std::cout.precision(2);
-            for (int e = 0; e < epochs; e++) {
-               // because stochastic gradient descent, the order needs randomization
 
-					// debug::printArr(order, 10);
+            // initial error within the model
+				float initialError = 0;
+
+            // loop through epochs
+            for (int e = 0; e < epochs; e++) {
+
+               // because stochastic gradient descent, the order needs randomization
                sort::shuffle(order, inputCount);
-               // debug::printArr(order, 10);
-                
+               
+               // calculates the first error
                if (calculateError) {
                   float currentError = 0;
 						std::cout << "Calculating error.\n";
+
+                  // run through all of the data and calculate the error for it
                   for (int i = 0; i < inputCount; i++) {
                      list->editRootMatrix(inputDataMatrixes[i]);
 							if (GPU) { list->calculateAndUpdateAllGPUV2(); }
@@ -84,59 +70,40 @@ namespace artificialIntelligence {
 							delete error;
 							delete squared;
 						}
+
+                  // set the initial error if this is the first one
 						if (initialError < 1) {
 							initialError = currentError;
 						}
                   std::cout << "Total error :: " << currentError << "%\n\n";
                }
-               // std::cout << std::setprecision(4);
-               // double sum = 0;
-               // for (int i = 0; i < inputCount; i++) {
-               //    list->editRootMatrix(inputDataMatrixes[i]);
-               //    list->calculateAndUpdateAll();
-                  
-               //    // (*outputDataMatrixes[i] -list->getLast()->getLayerMatrix())->printMatrix();
-               //    // exit (0);
-               //    std::cout << *outputDataMatrixes[i]->getData(0, 0, 0) << " :: " << *list->getLast()->getLayerMatrix()->getData(0, 0, 0) << " :: " << (*outputDataMatrixes[i] - list->getLast()->getLayerMatrix())->sum() * 100;
-               //    sum += (*outputDataMatrixes[i] - list->getLast()->getLayerMatrix())->sum() * 100 > 0 ? (*outputDataMatrixes[i] - list->getLast()->getLayerMatrix())->sum() * 100 : (*outputDataMatrixes[i] - list->getLast()->getLayerMatrix())->sum() * 100 * -1;
-               //    std::cout << "%" << " error\n";
-               //    // list->getLast()->getLayerMatrix()->printMatrix();
-               // }
-               // std::cout << "Total error :: " << sum << "%";
-               // std::cout << std::setprecision(2);
-               // list->print(true, true);
-               // std::cout << "\n\n";
 
-               // debug::printArr(order, inputCount);
-               // for (int i = 0; i < inputCount; i++) {
-               //    cout << "Input Matrixes " << i << ":";
-               //    inputDataMatrixes[order[i]]->printMatrix();
-               //    cout << "Output Matrix " << i << ":";
-               //    outputDataMatrixes[order[i]]->printMatrix();
-               // }
-
+               // calculate the error for each data point and correct it with backpropagation
                for (int i = 0; i < inputCount; i++) {
-                  // update the list with random input
+
+                  // initialize the first layer to the data point
                   list->editRootMatrix(inputDataMatrixes[order[i]]);
+
+                  // calculate the output layer with the given data point
                   if (GPU) { list->calculateAndUpdateAllGPUV2(); }
 						else { list->calculateAndUpdateAllCPU(); }
 
+                  // tells the user how far along the training is going
 						if (inputCount < 100 || i % (inputCount / 100) == 0) {
 							printf("%2.2f", e / (double) epochs * 100 + ((float) i / inputCount) / epochs * 100);
 							std::cout << "%\n";
 						}
-
-						// exit(0);
-                  // std::cout << "i: " << i << "   order[i]: " << order[i] << '\n';
-                  // backpropagation starts at root
 						
+                  // -- STARTING BACKPROPAGATION -- //
+
+                  // gets the final layer
                   BasicLayer* currentLayer = list->getLast();
 
-                  // do math for deltaOutput
+                  // gets difference in the final calculated layer and what the final output layer should be.
                   Matrix3D* currentLayerMatrix = currentLayer->getLayer();
                   Matrix3D* error = *(outputDataMatrixes[order[i]]) - currentLayerMatrix;
-						// outputDataMatrixes[order[i]]->printMatrix();
-						
+
+                  // calculates the derivate of the sigmoid function and multiplies by error for the 
                   Matrix3D* dSig = dSigmoid (currentLayerMatrix);
                   Matrix3D* deltaNext = *error * (dSig);
                   Matrix3D* deltaPrev = new Matrix3D (deltaNext->getLength(), deltaNext->getWidth(), deltaNext->getHeight());

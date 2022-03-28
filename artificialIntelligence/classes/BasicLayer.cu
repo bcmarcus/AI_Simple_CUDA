@@ -533,15 +533,6 @@ Matrix3D* BasicLayer::getBias () const {
    return this->biasMatrix;
 }
 
-
-void BasicLayer::setBiasMatrix (Matrix3D* biasMatrix) {
-   if (this->biasMatrix == nullptr) {
-      this->biasMatrix = new Matrix3D (biasMatrix->getLength(), biasMatrix->getWidth(), biasMatrix->getHeight());
-   }
-   this->biasMatrix->setMatrix(biasMatrix);
-}
-
-
 BasicLayer* BasicLayer::getLast () {
    if (this->next == nullptr) {
       return this;

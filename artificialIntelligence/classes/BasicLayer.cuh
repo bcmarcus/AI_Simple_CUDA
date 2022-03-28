@@ -24,66 +24,116 @@ namespace artificialIntelligence {
             BasicLayer* prev;
 
          public:
+
+            // -- CONSTRUCTOR DESTRUCTOR COPY -- //
+            
+            // constructors
             BasicLayer (Matrix3D* layerMatrix, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
-
             BasicLayer (int length, int width, int height);
-
             BasicLayer ();
 
+            // destructor
             ~BasicLayer ();
-
+            
+            // copy constructor
 				BasicLayer (const BasicLayer& b, bool copyAll = false);
 
-            int print (bool printBias = false, bool printWeights = false, int depth = 1);
+            
+            // -- GET METHODS -- //
 
-            BasicLayer* add (BasicLayer* layer);
-
-            BasicLayer* add (Matrix3D* layer, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
-	
-            void calculateAndUpdateAllCPU ();
-
-				void calculateAndUpdateAllGPU ();
-
-				void calculateAndUpdateAllGPUV2 ();
-
-			 	void calculateAndUpdateLayerGPU();
-
-            void calculateAndUpdateLayerCPU ();
-
-            void setPrev (BasicLayer* prev);
-
-            Matrix3D* getLayer () const;
-
-            void setLayer (Matrix3D* layerMatrix);
-
-				void setBias (Matrix3D* biasMatrix);
-
-				void setWeights (BasicWeight* weight);
-
-				BasicWeight* getWeights () const;
-
-				BasicWeight* newWeight (BasicLayer* firstLayer, BasicLayer* secondLayer);
-
-            Matrix3D* getBias () const;
-
-            void setBiasMatrix (Matrix3D* bias);
-
+            // gets the last layer in the model
             BasicLayer* getLast ();
 
+            // gets the next layer in the model
             BasicLayer* getNext () const;
 
+            // gets the previous layer in the model
             BasicLayer* getPrev () const;
 
+            // gets the current layer matrix
+            Matrix3D* getLayer () const;
+
+            // gets the current bias matrix
+            Matrix3D* getBias () const;
+
+            // gets the current weights
+				BasicWeight* getWeights () const;
+
+
+            // -- SET METHODS -- //
+
+            // sets the previous layer in the model to the one provided
+            void setPrev (BasicLayer* prev);
+
+            // sets the current layer matrix
+            void setLayer (Matrix3D* layerMatrix);
+
+            // sets the current bias matrix
+				void setBias (Matrix3D* biasMatrix);
+
+            // sets the current weights
+				void setWeights (BasicWeight* weight);
+            
+
+            // -- GENERATE METHODS -- // 
+
+            // adds an existing layer after this layer
+            BasicLayer* add (BasicLayer* layer);
+
+            // creates a new layer after this layer
+            BasicLayer* add (Matrix3D* layer, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
+
+            // creates a new weight based on the two given layers
+				BasicWeight* newWeight (BasicLayer* firstLayer, BasicLayer* secondLayer);
+
+
+            // -- LAYER UPDATE METHODS -- //
+
+            // updates all layers in the model using CPU compute
+            void calculateAndUpdateAllCPU ();
+
+            // updates all layers in the model using GPU compute
+				void calculateAndUpdateAllGPU ();
+
+            // updates all layers in the model using GPU compute revised
+				void calculateAndUpdateAllGPUV2 ();
+
+            // updates this layer using GPU compute
+			 	void calculateAndUpdateLayerGPU();
+
+            // updates this layer using CPU compute
+            void calculateAndUpdateLayerCPU ();
+
+            // calculates the actual error in the layer using CPU compute
 				Matrix3D* calculateErrorCPU (Matrix3D* delta);
 
+            // calculates the actual error in the layer using CPU compute
 				Matrix3D* calculateErrorGPU(Matrix3D* delta);
 
+            // updates weights in the layer using CPU compute
 				void updateWeightsGPU (Matrix3D* delta, double learningRate);
 
+            // updates weights in the layer using GPU compute
 				void updateWeightsCPU(Matrix3D* delta, double learningRate);
 
+
+            // -- PRINT METHODS -- //
+   
+            // prints the layer and all layers below it
+            int print (bool printBias = false, bool printWeights = false, int depth = 1);
+
+
+            // -- LOAD AND UNLOAD FILE METHODS -- //
+
+            // loads a model into a file using the format of 
+            // layer length, layer width, layer height
+            // bias length, bias width, bias height
+            // <the values for the bias, all comma seperated>
+            // layer length, layer width, layer height, bias length, bias width, bias height
+            // <the values for the weights, with each float16 represented by 4 bytes of data> 
             void toFile (std::ofstream* outputFile);
             
+            // loads a model from a file using the format described above
             static BasicLayer* loadFromFile (std::ifstream* inputFile, BasicLayer* prev = nullptr);
       };
 		
