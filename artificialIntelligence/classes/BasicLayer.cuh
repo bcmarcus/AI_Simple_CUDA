@@ -9,18 +9,29 @@ using namespace artificialIntelligence::classes;
 
 namespace artificialIntelligence {
    namespace classes {
-		__global__ void calculateAndUpdateLayerGPU(float* nodeValues, float* weights, float* output, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
 
-		__global__ void calculateError(float* weights, float* delta, float* error, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
+      // -- CUDA FUNCTIONS -- //
 
-		__global__ void updateWeights(float* weights, float* delta, float* input, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId, double learningRate);
+      // updates this layer using GPU compute
+		__global__ void calculateAndUpdateLayerGPU (float* nodeValues, float* weights, float* output, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
+
+      // calculates the error in the layer using CPU compute
+		__global__ void calculateError (float* weights, float* delta, float* error, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId);
+
+      // updates weights in the layer using CPU compute
+		__global__ void updateWeights (float* weights, float* delta, float* input, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId, double learningRate);
 
       class BasicLayer{
          private:
+            // layer values
             Matrix3D* layerMatrix;
             Matrix3D* biasMatrix;
             BasicWeight* weights;
+
+            // next layer
             BasicLayer* next;
+
+            // previous layer
             BasicLayer* prev;
 
          public:
@@ -41,14 +52,14 @@ namespace artificialIntelligence {
             
             // -- GET METHODS -- //
 
-            // gets the last layer in the model
-            BasicLayer* getLast ();
-
             // gets the next layer in the model
             BasicLayer* getNext () const;
 
             // gets the previous layer in the model
             BasicLayer* getPrev () const;
+
+            // gets the last layer in the model
+            BasicLayer* getLast ();
 
             // gets the current layer matrix
             Matrix3D* getLayer () const;
@@ -62,7 +73,10 @@ namespace artificialIntelligence {
 
             // -- SET METHODS -- //
 
-            // sets the previous layer in the model to the one provided
+            // sets the next layer in the model
+            void setNext (BasicLayer* next);
+
+            // sets the previous layer in the model
             void setPrev (BasicLayer* prev);
 
             // sets the current layer matrix
@@ -77,10 +91,10 @@ namespace artificialIntelligence {
 
             // -- GENERATE METHODS -- // 
 
-            // adds an existing layer after this layer
+            // adds a layer at the end of the model recursively
             BasicLayer* add (BasicLayer* layer);
 
-            // creates a new layer after this layer
+            // creates and adds a layer at the end of the model recursively
             BasicLayer* add (Matrix3D* layer, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
 
             // creates a new weight based on the two given layers
@@ -92,8 +106,8 @@ namespace artificialIntelligence {
             // updates all layers in the model using CPU compute
             void calculateAndUpdateAllCPU ();
 
-            // updates all layers in the model using GPU compute
-				void calculateAndUpdateAllGPU ();
+            // updates this layer using CPU compute
+            void calculateAndUpdateLayerCPU ();
 
             // updates all layers in the model using GPU compute revised
 				void calculateAndUpdateAllGPUV2 ();
@@ -101,20 +115,17 @@ namespace artificialIntelligence {
             // updates this layer using GPU compute
 			 	void calculateAndUpdateLayerGPU();
 
-            // updates this layer using CPU compute
-            void calculateAndUpdateLayerCPU ();
-
-            // calculates the actual error in the layer using CPU compute
+            // calculates the error in the layer using CPU compute
 				Matrix3D* calculateErrorCPU (Matrix3D* delta);
 
-            // calculates the actual error in the layer using CPU compute
-				Matrix3D* calculateErrorGPU(Matrix3D* delta);
+            // calculates the error in the layer using GPU compute
+				Matrix3D* calculateErrorGPU (Matrix3D* delta);
 
             // updates weights in the layer using CPU compute
-				void updateWeightsGPU (Matrix3D* delta, double learningRate);
+				void updateWeightsCPU(Matrix3D* delta, double learningRate);
 
             // updates weights in the layer using GPU compute
-				void updateWeightsCPU(Matrix3D* delta, double learningRate);
+				void updateWeightsGPU (Matrix3D* delta, double learningRate);
 
 
             // -- PRINT METHODS -- //

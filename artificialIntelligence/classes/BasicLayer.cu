@@ -121,36 +121,76 @@ BasicLayer::BasicLayer (const BasicLayer& b, bool copyNext) {
 	}
 } 
 
-int BasicLayer::print (bool printBias, bool printWeights, int depth) {
-   if (this->layerMatrix != nullptr) {
-      std::cout << "\n\nCurrent Index: " << depth << '\n';
-      std::cout << "Layer Matrix: \n";
-      this->layerMatrix->printMatrix();
-   } else {
-      std::cout << "No layer found!\n";
-      return depth;
-   }
-   if (printBias) {
-      if (this->biasMatrix != nullptr) {
-         std::cout << "Bias Matrix: \n";
-         this->biasMatrix->printMatrix();
-      } else {
-         std::cout << "No biases found!\n";
-      }
-   }
-   if (printWeights) {
-      if (this->weights != nullptr) {
-			std::cout << "Weight Matrix: \n";
-         this->weights->print();
-      } else {
-         std::cout << "No weights found!\n";
-      }
-   }
+BasicLayer* BasicLayer::getNext () const {
+   return this->next;
+}
+
+BasicLayer* BasicLayer::getPrev () const {
+   return this->prev;
+}
+
+BasicLayer* BasicLayer::getLast () {
    if (this->next == nullptr) {
-      return depth;
+      return this;
    }
-   return this->next->print(printBias, printWeights, depth + 1);
-}  
+   return this->next->getLast();
+}
+
+Matrix3D* BasicLayer::getLayer () const {
+   return this->layerMatrix;
+}
+
+Matrix3D* BasicLayer::getBias () const {
+   return this->biasMatrix;
+}
+
+BasicWeight* BasicLayer::getWeights () const {
+	return this->weights;
+}
+
+void BasicLayer::setNext (BasicLayer* next) {
+   if (this->next != nullptr) {
+      delete this->next;
+   }
+   this->next = next;
+} 
+
+void BasicLayer::setPrev (BasicLayer* prev) {
+   if (this->prev != nullptr) {
+      delete this->prev;
+   }
+   this->prev = prev;
+} 
+
+void BasicLayer::setLayer (Matrix3D* layerMatrix) {
+   if (this->layerMatrix == nullptr) {
+      this->layerMatrix = new Matrix3D (layerMatrix->getLength(), layerMatrix->getWidth(), layerMatrix->getHeight());
+   }
+   this->layerMatrix->setMatrix(layerMatrix);
+}
+
+void BasicLayer::setBias (Matrix3D* biasMatrix) {
+   if (this->biasMatrix == nullptr) {
+      this->biasMatrix = new Matrix3D (biasMatrix->getLength(), biasMatrix->getWidth(), biasMatrix->getHeight());
+   }
+   this->biasMatrix->setMatrix(biasMatrix);
+}
+
+void BasicLayer::setWeights (BasicWeight* weights) {
+   if (this->weights == nullptr) {
+      delete this->weights;
+   }
+   this->weights = weights;
+}
+
+BasicLayer* BasicLayer::add (BasicLayer* layer) {
+   if (this->next == nullptr) {
+      this->next = layer;
+   } else {
+      this->next = this->next->add(layer);
+   }
+   return this;
+}
 
 BasicLayer* BasicLayer::add (Matrix3D* layerMatrix, Matrix3D* biasMatrix, BasicWeight* weights) {
 	
@@ -182,14 +222,67 @@ BasicWeight* BasicLayer::newWeight(BasicLayer* firstLayer, BasicLayer* secondLay
 		secondLayer->getLayer()->getHeight());
 }
 
-
-BasicLayer* BasicLayer::add (BasicLayer* layer) {
+void artificialIntelligence::classes::BasicLayer::calculateAndUpdateAllCPU () {
    if (this->next == nullptr) {
-      this->next = layer;
-   } else {
-      this->next = this->next->add(layer);
+      return;
    }
-   return this;
+   this->calculateAndUpdateLayerCPU();
+   this->next->calculateAndUpdateAllCPU();
+}
+
+// can be parallelized
+void BasicLayer::calculateAndUpdateLayerCPU () {
+   // start with the first node, and add all of the values to a node then sigmoid
+   Matrix3D* nextLayer = this->next->getLayer();
+   Matrix3D* outputs = new Matrix3D (nextLayer->getLength(), nextLayer->getWidth(), nextLayer->getHeight());
+	outputs->setAll(0);
+   if (isnan(*outputs->getData(0, 0, 0))) {
+      std::cout << "null init";
+      exit (0);
+   }
+   // start at start layer, then go to the end layer
+   
+   // declaring temp variables
+   float activation = 0;
+
+   // loop through every weight matrix
+   // std::cout << "[" << this->layerMatrix->getLength() << "] " << "[" << this->layerMatrix->getWidth() << "] " << "[" << this->layerMatrix->getHeight() << "]   " 
+   // << "[" << nextLayer->getLength() << "] " << "[" << nextLayer->getWidth() << "] " << "[" << nextLayer->getHeight() << "]" << "\n\n";
+   for (int fl = 0; fl < this->layerMatrix->getLength(); fl++) {
+      for (int fw = 0; fw < this->layerMatrix->getWidth(); fw++) {
+         for (int fh = 0; fh < this->layerMatrix->getHeight(); fh++) {
+            
+
+            for (int sl = 0; sl < nextLayer->getLength(); sl++) {
+               for (int sw = 0; sw < nextLayer->getWidth(); sw++) {
+                  for (int sh = 0; sh < nextLayer->getHeight(); sh++) {
+                     
+
+                     
+                     activation = *this->layerMatrix->getData(fl, fw, fh) * *this->weights->getData(fl, fw, fh, sl, sw, sh) + *outputs->getData(sl, sw, sh);
+
+                     outputs->insert(activation, sl, sw, sh);
+                  }
+               }
+            }
+         }
+      }
+   } 
+
+   // adds the bias and takes the sigmoid
+   for (int sl = 0; sl < nextLayer->getLength(); sl++) {
+      for (int sw = 0; sw < nextLayer->getWidth(); sw++) {
+         for (int sh = 0; sh < nextLayer->getHeight(); sh++) {
+            activation = sigmoid(*outputs->getData(sl, sw, sh) + *this->biasMatrix->getData(sl, sw, sh));
+            // std::cout << outputs->getData(sl, sw, sh) << '\n';
+            outputs->insert(activation, sl, sw, sh);
+         }
+      }
+   }
+
+   // set the next matrix to the layer that was just found
+   this->next->setLayer (outputs);
+   delete outputs;
 }
 
 void BasicLayer::calculateAndUpdateAllGPUV2() {
@@ -422,132 +515,6 @@ __global__ void artificialIntelligence::classes::calculateAndUpdateLayerGPU(floa
 		// if (outputNodeId < 20) {printf ("BlockID: %d   Data:  %f   Output: %f\n", outputNodeId, sdata[0], output[outputNodeId] + sdata[0]);}
 		output[outputNodeId] += sdata[0];
 	}
-}
-
-void artificialIntelligence::classes::BasicLayer::calculateAndUpdateAllCPU () {
-   if (this->next == nullptr) {
-      return;
-   }
-   this->calculateAndUpdateLayerCPU();
-   this->next->calculateAndUpdateAllCPU();
-}
-
-// can be parallelized
-void BasicLayer::calculateAndUpdateLayerCPU () {
-   // start with the first node, and add all of the values to a node then sigmoid
-   Matrix3D* nextLayer = this->next->getLayer();
-   Matrix3D* outputs = new Matrix3D (nextLayer->getLength(), nextLayer->getWidth(), nextLayer->getHeight());
-	outputs->setAll(0);
-   if (isnan(*outputs->getData(0, 0, 0))) {
-      std::cout << "null init";
-      exit (0);
-   }
-   // start at start layer, then go to the end layer
-   
-   // declaring temp variables
-   float activation = 0;
-
-   // loop through every weight matrix
-   // std::cout << "[" << this->layerMatrix->getLength() << "] " << "[" << this->layerMatrix->getWidth() << "] " << "[" << this->layerMatrix->getHeight() << "]   " 
-   // << "[" << nextLayer->getLength() << "] " << "[" << nextLayer->getWidth() << "] " << "[" << nextLayer->getHeight() << "]" << "\n\n";
-   for (int fl = 0; fl < this->layerMatrix->getLength(); fl++) {
-      for (int fw = 0; fw < this->layerMatrix->getWidth(); fw++) {
-         for (int fh = 0; fh < this->layerMatrix->getHeight(); fh++) {
-            
-
-            for (int sl = 0; sl < nextLayer->getLength(); sl++) {
-               for (int sw = 0; sw < nextLayer->getWidth(); sw++) {
-                  for (int sh = 0; sh < nextLayer->getHeight(); sh++) {
-                     
-
-                     
-                     activation = *this->layerMatrix->getData(fl, fw, fh) * *this->weights->getData(fl, fw, fh, sl, sw, sh) + *outputs->getData(sl, sw, sh);
-
-                     outputs->insert(activation, sl, sw, sh);
-                  }
-               }
-            }
-         }
-      }
-   } 
-
-   // adds the bias and takes the sigmoid
-   for (int sl = 0; sl < nextLayer->getLength(); sl++) {
-      for (int sw = 0; sw < nextLayer->getWidth(); sw++) {
-         for (int sh = 0; sh < nextLayer->getHeight(); sh++) {
-            activation = sigmoid(*outputs->getData(sl, sw, sh) + *this->biasMatrix->getData(sl, sw, sh));
-            // std::cout << outputs->getData(sl, sw, sh) << '\n';
-            outputs->insert(activation, sl, sw, sh);
-         }
-      }
-   }
-
-   // set the next matrix to the layer that was just found
-   this->next->setLayer (outputs);
-   delete outputs;
-
-}
-
-
-void BasicLayer::setPrev (BasicLayer* prev) {
-   if (this->prev != nullptr) {
-      delete this->prev;
-   }
-   this->prev = prev;
-} 
-
-
-Matrix3D* BasicLayer::getLayer () const {
-   return this->layerMatrix;
-}
-
-
-void BasicLayer::setLayer (Matrix3D* layerMatrix) {
-   if (this->layerMatrix == nullptr) {
-      this->layerMatrix = new Matrix3D (layerMatrix->getLength(), layerMatrix->getWidth(), layerMatrix->getHeight());
-   }
-   this->layerMatrix->setMatrix(layerMatrix);
-}
-
-void BasicLayer::setBias (Matrix3D* biasMatrix) {
-   if (this->biasMatrix == nullptr) {
-      this->biasMatrix = new Matrix3D (biasMatrix->getLength(), biasMatrix->getWidth(), biasMatrix->getHeight());
-   }
-   this->biasMatrix->setMatrix(biasMatrix);
-}
-
-void BasicLayer::setWeights (BasicWeight* weights) {
-   if (this->weights == nullptr) {
-      delete this->weights;
-   }
-   this->weights = weights;
-}
-
-
-BasicWeight* BasicLayer::getWeights () const {
-	return this->weights;
-}
-
-
-Matrix3D* BasicLayer::getBias () const {
-   return this->biasMatrix;
-}
-
-BasicLayer* BasicLayer::getLast () {
-   if (this->next == nullptr) {
-      return this;
-   }
-   return this->next->getLast();
-}
-
-
-BasicLayer* BasicLayer::getNext () const {
-   return this->next;
-}
-
-
-BasicLayer* BasicLayer::getPrev () const {
-   return this->prev;
 }
 
 Matrix3D* BasicLayer::calculateErrorCPU (Matrix3D* delta) {
@@ -956,9 +923,38 @@ __global__ void artificialIntelligence::classes::updateWeights(float* weights, f
 // return weights
 
 
-// 24 bytes are input and bias layer sizes
-// bias bytes are afterwards
-// 
+int BasicLayer::print (bool printBias, bool printWeights, int depth) {
+   if (this->layerMatrix != nullptr) {
+      std::cout << "\n\nCurrent Index: " << depth << '\n';
+      std::cout << "Layer Matrix: \n";
+      this->layerMatrix->printMatrix();
+   } else {
+      std::cout << "No layer found!\n";
+      return depth;
+   }
+   if (printBias) {
+      if (this->biasMatrix != nullptr) {
+         std::cout << "Bias Matrix: \n";
+         this->biasMatrix->printMatrix();
+      } else {
+         std::cout << "No biases found!\n";
+      }
+   }
+   if (printWeights) {
+      if (this->weights != nullptr) {
+			std::cout << "Weight Matrix: \n";
+         this->weights->print();
+      } else {
+         std::cout << "No weights found!\n";
+      }
+   }
+   if (this->next == nullptr) {
+      return depth;
+   }
+   return this->next->print(printBias, printWeights, depth + 1);
+}  
+
+
 void BasicLayer::toFile (std::ofstream* outputFile) {
 	char* output = new char[sizeof(int) * 6];
    *outputFile << this->layerMatrix->getLength() << ',' << this->layerMatrix->getWidth() << ',' << this->layerMatrix->getHeight() << '\n';

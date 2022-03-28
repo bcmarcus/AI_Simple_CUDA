@@ -55,14 +55,6 @@ void BasicLayerList::editRootMatrix (Matrix3D* newMatrix) {
    }
 }
 
-// void BasicLayerList::calculateAndUpdateAllGPU () {
-//    if (this->root != nullptr) {
-//       this->root->calculateAndUpdateAllGPU();
-//    } else {
-//       std::cout << "No root layer initialized!\n";
-//    }
-// }
-
 void BasicLayerList::calculateAndUpdateAllGPUV2 () {
    if (this->root != nullptr) {
       this->root->calculateAndUpdateAllGPUV2();
