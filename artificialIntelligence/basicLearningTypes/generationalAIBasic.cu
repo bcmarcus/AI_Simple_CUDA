@@ -118,24 +118,9 @@ namespace artificialIntelligence {
                for (int i = 0; i < inputCount; i++) {
                   // update the list with random input
                   list->editRootMatrix(inputDataMatrixes[order[i]]);
-						if (isnan(*list->getLast()->getLayer()->getData(0,0,0))) {
-							list->getLast()->getLayer()->printMatrix();
-							std::cout << "Float error, not a number 7\n";
-							if (print) {
-								list->print(0, 0);
-							}
-							exit (0);
-						}
                   if (GPU) { list->calculateAndUpdateAllGPUV2(); }
 						else { list->calculateAndUpdateAllCPU(); }
-						if (isnan(*list->getLast()->getLayer()->getData(0,0,0))) {
-							list->getLast()->getLayer()->printMatrix();
-							std::cout << "Float error, not a number 8\n";
-							if (print) {
-								list->print(0, 0);
-							}
-							exit (0);
-						}
+
 						if (inputCount < 100 || i % (inputCount / 100) == 0) {
 							printf("%2.2f", e / (double) epochs * 100 + ((float) i / inputCount) / epochs * 100);
 							std::cout << "%\n";
@@ -155,27 +140,8 @@ namespace artificialIntelligence {
                   Matrix3D* dSig = dSigmoid (currentLayerMatrix);
                   Matrix3D* deltaNext = *error * (dSig);
                   Matrix3D* deltaPrev = new Matrix3D (deltaNext->getLength(), deltaNext->getWidth(), deltaNext->getHeight());
-						
-						if (isnan(*error->getData(0,0,0))) {
-							outputDataMatrixes[order[i]]->printMatrix();
-							currentLayerMatrix->printMatrix();
-							dSig->printMatrix();
-							std::cout << "Float error, not a number 4\n";
-							if (print) {
-								list->print(0, 0);
-								deltaPrev->printMatrix();
-							}
-							exit (0);
-						}
-						if (isnan(*dSig->getData(0,0,0))) {
-							currentLayerMatrix->printMatrix();
-							std::cout << "Float error, not a number 1\n";
-							if (print) {
-								list->print(0, 0);
-								deltaPrev->printMatrix();
-							}
-							exit (0);
-						}
+					
+
                   delete error;
                   delete dSig;
 
@@ -213,26 +179,6 @@ namespace artificialIntelligence {
                      delete deltaNext;
                      dSig = dSigmoid (currentLayerMatrix);
                      deltaNext = *error * (dSig);
-							if (isnan(*dSig->getData(0,0,0))) {
-								currentLayerMatrix->printMatrix();
-								std::cout << "Float error, not a number 5\n";
-								if (print) {
-									list->print(0, 0);
-									deltaPrev->printMatrix();
-								}
-								exit (0);
-							}
-							if (isnan(*error->getData(0,0,0))) {
-								outputDataMatrixes[order[i]]->printMatrix();
-								currentLayerMatrix->printMatrix();
-								dSig->printMatrix();
-								std::cout << "Float error, not a number 6\n";
-								if (print) {
-									list->print(0, 0);
-									deltaPrev->printMatrix();
-								}
-								exit (0);
-							}
 
                      delete error;
                      delete dSig;
@@ -250,18 +196,10 @@ namespace artificialIntelligence {
 							// tempLayer->updateWeightsCPU(deltaPrev, learningRate);
 							if (GPU) { currentLayer->updateWeightsGPU(deltaPrev, learningRate); }
 							else { currentLayer->updateWeightsCPU(deltaPrev, learningRate); }
-// tempLayer->print(1,1);
-// currentLayer->print(1,1);
-// exit(0);
-							if (isnan (*list->getLast()->getLayer()->getData(0,0,0))) {
-								std::cout << "Float error, not a number 3\n";
-								if (print) {
-									list->print(0, 0);
-									deltaPrev->printMatrix();
-								}
-								exit (0);
-							}
-
+							// tempLayer->print(1,1);
+							// currentLayer->print(1,1);
+							// exit(0);
+	
                      currentLayer = currentLayer->getPrev();
                   }
 						
@@ -275,7 +213,7 @@ namespace artificialIntelligence {
 
                // list->getLast()->print();
                if (isnan (*list->getLast()->getLayer()->getData(0,0,0))) {
-						list->print(1,1);
+						if (print) list->print(1,1);
                   std::cout << "here2\n";
                   exit (0);
                }
