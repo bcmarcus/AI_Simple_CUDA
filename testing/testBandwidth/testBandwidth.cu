@@ -64,7 +64,7 @@ void profileCopies(float        *h_a,
 
 int main()
 {
-  unsigned int nElements = 1024*1024*1024;
+  unsigned int nElements = 1024*1024;
   const unsigned int bytes = nElements * sizeof(float);
 
   // host arrays
@@ -82,7 +82,6 @@ int main()
   checkCuda( cudaMalloc((void**)&d_a, bytes) );           // device
 	
   for (long long i = 0; i < nElements; ++i) h_aPageable[i] = i;    
-  exit(0);  
   memcpy(h_aPinned, h_aPageable, bytes);
   memset(h_bPageable, 0, bytes);
   memset(h_bPinned, 0, bytes);

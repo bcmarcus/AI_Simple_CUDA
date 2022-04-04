@@ -1,5 +1,7 @@
 #include <cmath>
+
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
+
 #include "activationFunctions.cuh"
 
 using namespace coreutils::classes::matrixes;

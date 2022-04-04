@@ -7,25 +7,21 @@ DEFINES = -DUSE_ZLIB
 
 OPTFLAGS = -O2 -std=c++2a -Wall
 
-NVFLAGS = -I $(INCLUDE) -Xcompiler -O2 -L/usr/local/cuda-11.6/lib64 -lcuda -lstdc++ -lcudart -dc -arch=sm_86 --std=c++17
-NVLINKFLAGS = -L/usr/local/cuda-11.6/lib64 -lcuda -lcudart
-#-lstdc++
-
-CPPFLAGS = $(OPTFLAGS) -I $(INCLUDE) $(DEFINES)
-LINKFLAGS = -lz 
+NVFLAGS = -I $(INCLUDE) -I $(INCLUDE)../ -Xcompiler -O2 -L/usr/local/cuda-11.6/lib64 -lcuda -lstdc++ -lcudart -dc --std=c++17
+CPPFLAGS = $(OPTFLAGS) -I $(INCLUDE) -I $(INCLUDE)../ $(DEFINES)
 
 MAGICKLINKFLAGS = `Magick++-config --ldflags --libs`
+NVLINKFLAGS = -L/usr/local/cuda-11.6/lib64 -lcuda -lcudart
+LINKFLAGS = -lz 
 
 NVCCOBJS = src/testUpdateWeights.o \
-	src/cudaErrors.o \
 	src/BasicLayerList.o \
 	src/BasicLayer.o \
 	src/BasicWeight.o \
 	src/activationFunctions.o \
 	src/Matrix3D.o
 
-CPPOBJS = src/simpleMath.o \
-	src/time.o
+CPPOBJS =
 
 all: linkCPU
 
@@ -33,16 +29,7 @@ linkCPU: $(CPPOBJS) $(NVCCOBJS) src/gpuCode.o
 	$(CCPP) $(CPPFLAGS) -o testUpdateWeights.out  $^ $(LINKFLAGS) $(NVLINKFLAGS) $(MAGICKLINKFLAGS)
 
 src/gpuCode.o: $(NVCCOBJS)
-	$(NVCC) --device-link -arch=sm_86 -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
-
-src/time.o: $(INCLUDE)coreutils/util/time.cpp 
-	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-	
-src/simpleMath.o: $(INCLUDE)coreutils/functions/math/simpleMath.cpp 
-	$(CCPP) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
-src/cudaErrors.o: $(INCLUDE)coreutils/util/cudaErrors.cu $(INCLUDE)coreutils/util/cudaErrors.cuh 
-	$(NVCC) $(NVFLAGS) $< -o $@
+	$(NVCC) --device-link -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
 
 src/Matrix3D.o: $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cu
 	$(NVCC) $(NVFLAGS) $< -o $@
@@ -50,16 +37,16 @@ src/Matrix3D.o: $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cu
 src/activationFunctions.o: $(INCLUDE)artificialIntelligence/functions/activationFunctions.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/BasicWeight.o: $(INCLUDE)artificialIntelligence/classes/BasicWeight.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/BasicWeight.o: $(INCLUDE)artificialIntelligence/classes/weights/BasicWeight.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/BasicLayer.cu $(INCLUDE)artificialIntelligence/classes/BasicWeight.cuh $(INCLUDE)artificialIntelligence/functions/activationFunctions.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/layers/BasicLayer.cu $(INCLUDE)artificialIntelligence/classes/weights/BasicWeight.cuh $(INCLUDE)artificialIntelligence/functions/activationFunctions.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/layerLists/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/layers/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/testUpdateWeights.o : $(INCLUDE)testing/testUpdateWeights/testUpdateWeights.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/BasicLayerList.hpp $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/testUpdateWeights.o : $(INCLUDE)testing/testUpdateWeights/testUpdateWeights.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/layerLists/BasicLayerList.cuh $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
 clean1: 

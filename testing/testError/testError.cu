@@ -5,11 +5,11 @@
 #include <coreutils/util/cudaErrors.cuh>
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <coreutils/functions/debug/print.cpp>
+#include <coreutils/functions/debug/print.hpp>
 
-#include <artificialIntelligence/classes/BasicWeight.cuh>
-#include <artificialIntelligence/classes/BasicLayer.cuh>
-#include <artificialIntelligence/classes/BasicLayerList.hpp>
+#include <artificialIntelligence/classes/weights/BasicWeight.cuh>
+#include <artificialIntelligence/classes/layers/BasicLayer.cuh>
+#include <artificialIntelligence/classes/layerLists/BasicLayerList.cuh>
 
 using namespace coreutils::classes::matrixes;
 using namespace coreutils::functions::debug;

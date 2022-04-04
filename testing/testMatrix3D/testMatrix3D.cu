@@ -1,18 +1,9 @@
 #include <stdio.h>
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <artificialIntelligence/classes/BasicLayerList.hpp>
+#include <artificialIntelligence/classes/layerLists/BasicLayerList.cuh>
+#include <coreutils/util/cudaErrors.cuh>
 
 using namespace coreutils::classes::matrixes;
-
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess) 
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
-}
 
 
 __global__ void kernel(float* d1, float* d2, float* d3, int l, int w, int h) {

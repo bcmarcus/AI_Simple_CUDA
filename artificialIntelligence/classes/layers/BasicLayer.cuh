@@ -2,7 +2,9 @@
 #define BASIC_LAYER_HPP
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include "BasicWeight.cuh"
+
+#include "LayerBase.cuh"
+#include "../weights/BasicWeight.cuh"
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
@@ -21,27 +23,19 @@ namespace artificialIntelligence {
       // updates weights in the layer using CPU compute
 		__global__ void updateWeights (float* weights, float* delta, float* input, int inputSize, int outputSize, int numPerThread, long long maxWeightIndex, long long helperIndex, long long startingWeight, int startingOutputId, double learningRate);
 
-      class BasicLayer{
-         private:
-            // layer values
-            Matrix3D* layerMatrix;
-            Matrix3D* biasMatrix;
-            BasicWeight* weights;
-
-            // next layer
-            BasicLayer* next;
-
-            // previous layer
-            BasicLayer* prev;
-
+      class BasicLayer : public LayerBase {
          public:
 
             // -- CONSTRUCTOR DESTRUCTOR COPY -- //
             
-            // constructors
-            BasicLayer (Matrix3D* layerMatrix, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
+            // default coonstructor
+				BasicLayer ();
+
+				// generate layer constructor
             BasicLayer (int length, int width, int height);
-            BasicLayer ();
+
+				// initialize with values constructor
+            BasicLayer (Matrix3D* layerMatrix, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
 
             // destructor
             ~BasicLayer ();

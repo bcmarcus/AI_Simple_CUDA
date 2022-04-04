@@ -5,11 +5,11 @@
 #include <coreutils/util/cudaErrors.cuh>
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <coreutils/functions/debug/print.cpp>
+#include <coreutils/functions/debug/print.hpp>
 
-#include <artificialIntelligence/classes/BasicWeight.cuh>
-#include <artificialIntelligence/classes/BasicLayer.cuh>
-#include <artificialIntelligence/classes/BasicLayerList.hpp>
+#include <artificialIntelligence/classes/weights/BasicWeight.cuh>
+#include <artificialIntelligence/classes/layers/BasicLayer.cuh>
+#include <artificialIntelligence/classes/layerLists/BasicLayerList.cuh>
 
 using namespace coreutils::classes::matrixes;
 using namespace coreutils::functions::debug;
@@ -41,7 +41,6 @@ void test1() {
 	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
 	// currentLayerCPU->print(0, 1);
-
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
@@ -266,7 +265,7 @@ void test3random() {
 
 void test4() {
 	int l = 10;
-	int w = 10;
+	int w = 30;
 	int h = 82;
 	Matrix3D* root = new Matrix3D(l, w, h);
 	root->setAll(1);
@@ -300,7 +299,7 @@ void test4() {
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0),  0.00001) << '\n';
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
@@ -340,7 +339,7 @@ void test4random() {
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0),  0.00001) << '\n';
 	// currentLayerCPU->print(0, 1);
 
 	delete model;
@@ -362,7 +361,7 @@ void test45random() {
 	model->getRoot()->getNext()->getLayer()->setAll(1);
 	
 
-	model->getRoot()->getWeights()->setAll(2);
+	// model->getRoot()->getWeights()->setAll(2);
 	
 	
 
@@ -376,16 +375,16 @@ void test45random() {
 	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
 	
-	currentLayerCPU->print(0, 1);
+	// currentLayerCPU->print(0, 1);
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
-	currentLayerGPU->print(0, 1);
+	// currentLayerGPU->print(0, 1);
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
+	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0),  0.00001) << '\n';
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
@@ -429,9 +428,9 @@ void test5() {
 	std::cout << "::::RESULTS::::\n";
 	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "EQUALS: " << (currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) &&
-	 									currentLayerCPU->getWeights()->getWeightMatrix(4)->equals(currentLayerGPU->getWeights()->getWeightMatrix(4)) &&
-										currentLayerCPU->getWeights()->getWeightMatrix(5)->equals(currentLayerGPU->getWeights()->getWeightMatrix(5))) << '\n';
+	std::cout << "EQUALS: " << (currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0),  0.00001) &&
+	 									currentLayerCPU->getWeights()->getWeightMatrix(4)->equals(currentLayerGPU->getWeights()->getWeightMatrix(4),  0.00001) &&
+										currentLayerCPU->getWeights()->getWeightMatrix(5)->equals(currentLayerGPU->getWeights()->getWeightMatrix(5),  0.00001)) << '\n';
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(23)->printMatrix();
 	delete model;
@@ -474,43 +473,41 @@ void test5random() {
 	std::cout << "EQUALS: " << (currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0),  0.00001) &&
 	 									currentLayerCPU->getWeights()->getWeightMatrix(4)->equals(currentLayerGPU->getWeights()->getWeightMatrix(4),  0.00001) &&
 										currentLayerCPU->getWeights()->getWeightMatrix(5)->equals(currentLayerGPU->getWeights()->getWeightMatrix(5),  0.00001)) << '\n';
-	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
-	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
 	delete currentLayerGPU;
 }
 
 int main() {
-	// std::cout << "Starting test 1\n";
-	// test1();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 1 random\n";
-	// test1random();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 2\n";
-	// test2();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 2 random\n";
-	// test2random();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 3\n";
-	// test3();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 3 random\n";
-	// test3random();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 4\n";
-	// test4();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 4 random\n";
-	// test4random();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 45 random\n";
-	// test45random();
-	// std::cout << "\n\n";
-	// std::cout << "Starting test 5\n";
+	std::cout << "Starting test 1\n";
+	test1();
+	std::cout << "\n\n";
+	std::cout << "Starting test 1 random\n";
+	test1random();
+	std::cout << "\n\n";
+	std::cout << "Starting test 2\n";
+	test2();
+	std::cout << "\n\n";
+	std::cout << "Starting test 2 random\n";
+	test2random();
+	std::cout << "\n\n";
+	std::cout << "Starting test 3\n";
+	test3();
+	std::cout << "\n\n";
+	std::cout << "Starting test 3 random\n";
+	test3random();
+	std::cout << "\n\n";
+	std::cout << "Starting test 4\n";
+	test4();
+	std::cout << "\n\n";
+	std::cout << "Starting test 4 random\n";
+	test4random();
+	std::cout << "\n\n";
+	std::cout << "Starting test 45 random\n";
+	test45random();
+	std::cout << "\n\n";
+	std::cout << "Starting test 5\n";
 	// test5();
-	// std::cout << "\n\n";
+	std::cout << "\n\n";
 	std::cout << "Starting test 5 random\n";
 	test5random();
 	std::cout << "\n\n\n";

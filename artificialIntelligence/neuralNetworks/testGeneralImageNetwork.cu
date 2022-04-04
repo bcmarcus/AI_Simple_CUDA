@@ -13,15 +13,16 @@
 #include <fstream>
 #include <filesystem>
 
-#include <imageEdit/generate/generateInput.hpp>
-// #include <artificialIntelligence/basicLearningTypes/generationalAIBasic.cpp>
-#include <artificialIntelligence/classes/BasicLayerList.hpp>
-
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <coreutils/functions/sort/sortHelpers.cpp>
-#include <coreutils/functions/sort/sortingAlgorithms.cpp>
+
+#include <coreutils/functions/sort/sortHelpers.hpp>
+#include <coreutils/functions/sort/sortingAlgorithms.hpp>
+
 #include <coreutils/util/time.hpp>
 
+#include <artificialIntelligence/classes/layerLists/BasicLayerList.cuh>
+
+#include <Image_Manipulation/generate/generateInput.hpp>
 
 using namespace std;
 using namespace imageEdit;
@@ -67,8 +68,8 @@ int main (int argc, char **argv) {
       std::cout << "Invalid Third Argument\n";
       exit(1);
    }
-   
-   BasicLayerList* model = BasicLayerList::loadFromFile (modelPath);
+	
+   BasicLayerList* model = new BasicLayerList (modelPath);
 
    int numOutputs = model->getLast()->getLayer()->getHeight();
 
@@ -160,7 +161,7 @@ bool testSingleImage(std::string dataPath, BasicLayerList* model, std::string* i
    }
 
    outputMatrix->insert(1, 0, 0, index);
-   model->editRootMatrix(inputMatrix);
+   model->setRootMatrix(inputMatrix);
 
 	// tentative before GPU change
 	// inputMatrix->printMatrix();

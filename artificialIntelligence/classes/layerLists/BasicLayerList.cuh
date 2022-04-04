@@ -4,7 +4,9 @@
 #include <iostream>
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include "BasicLayer.cuh"
+
+#include "../layerLists/LayerListBase.cuh"
+#include "../layers/BasicLayer.cuh"
 
 using namespace coreutils::classes::matrixes;
 using namespace artificialIntelligence::classes;
@@ -13,21 +15,19 @@ namespace artificialIntelligence {
    namespace classes {
 
       
-      class BasicLayerList {
-         private:
-            // first layer
-            BasicLayer* root;
-
-            // last layer
-            BasicLayer* last;
-
+      class BasicLayerList : public LayerListBase {
          public:
             // -- CONSTRUCTOR DESTRUCTOR COPY -- //
 
-            // constructors
+            // default constructor
+				BasicLayerList ();
+							
+				// constructor
             BasicLayerList (Matrix3D* layer, Matrix3D* biasMatrix = nullptr, BasicWeight* weights = nullptr);
-            BasicLayerList ();
             
+				// loads a model from a file
+				BasicLayerList (std::string filepath);
+
             // destructor
 				~BasicLayerList ();
 
@@ -37,16 +37,17 @@ namespace artificialIntelligence {
 
             // -- GET METHODS -- //
 
-            // gets the root layeer
+            // gets the root layer
             BasicLayer* getRoot ();
 
             // gets the last layer
             BasicLayer* getLast ();
 
+
             // -- SET METHODS -- //
             
             // sets the root matrix
-            void editRootMatrix (Matrix3D* newMatrix);
+            void setRootMatrix (Matrix3D* newMatrix);
 
 
             // -- GENERATE METHODS -- //
@@ -75,11 +76,11 @@ namespace artificialIntelligence {
 
             // -- PRINT METHODS -- //
             
-            // prints the layer and all layers below it
+            // prints the entire model
             void print (bool printBias = false, bool printWeights = false);
 
 
-            // -- LOAD AND UNLOAD FILE METHODS -- //
+            // -- LOAD FILE METHODS -- //
 
             // loads a model into a file using the format of 
             // layer length, layer width, layer height
@@ -88,9 +89,6 @@ namespace artificialIntelligence {
             // layer length, layer width, layer height, bias length, bias width, bias height
             // <the values for the weights, with each float16 represented by 4 bytes of data> 
             void toFile (std::string filepath);
-
-            // loads a model from a file using the format described above
-            static BasicLayerList* loadFromFile (std::string filepath);
       };
    }
 }

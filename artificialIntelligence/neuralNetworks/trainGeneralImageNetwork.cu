@@ -11,11 +11,13 @@
 #include <sys/resource.h>
 #include <vector>
 
-#include <imageEdit/generate/generateInput.hpp>
-#include <artificialIntelligence/basicLearningTypes/generationalAIBasic.hpp>
-#include <artificialIntelligence/classes/BasicLayerList.hpp>
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <coreutils/functions/debug/print.cpp>
+#include <coreutils/functions/debug/print.hpp>
+
+#include <artificialIntelligence/basicLearningTypes/generationalAIBasic.cuh>
+#include <artificialIntelligence/classes/layerLists/BasicLayerList.cuh>
+
+#include <Image_Manipulation/generate/generateInput.hpp>
 
 using namespace std;
 using namespace imageEdit;
@@ -31,7 +33,7 @@ int countImages(std::string inputImageFolder, std::string indexToAnswerPath, map
 int countImagesHelper (std::string inputImageFolder, ofstream &indexToAnswerFile, map<std::string, int>& answerToIndex, int* index);
 
 void help (char *argv[]) {
-   fprintf(stderr, "Usage: %s [-e epochs] [-r learningRate] [-l length] [-w width] [-h height] [-c layer count] [-t type of image (BW, RGB, RGBA)] [-d path to data (required)] [-a index to answer file (required)] [-o model output file (required)]\n",argv[0]);
+   fprintf(stderr, "Usage: %s [-e epochs] [-r learningRate] [-l length] [-w width] [-h height] [-c layer count] [-b batch size] [-t type of image (BW, RGB, RGBA)] [-d path to data (required)] [-a index to answer file (required)] [-o model output file (required)]\n",argv[0]);
    exit(EXIT_FAILURE);
 }
 
@@ -49,6 +51,7 @@ int main (int argc, char *argv[]) {
    int hiddenLayerLength = 1; 
    int hiddenLayerWidth = 10;
    int hiddenLayerHeight = 100;
+	int batchSize = 0;
 
    // layerCount - 2 = hiddenLayerCount
    int layerCount = 5;
@@ -61,7 +64,7 @@ int main (int argc, char *argv[]) {
    *currentPath += "/../../../artificialIntelligence/neuralNetworks";
    filesystem::current_path(filesystem::path(*currentPath));
 
-   while ((opt = getopt(argc, argv, "e:r:l:w:h:c:t:d:a:o:")) != -1) {
+   while ((opt = getopt(argc, argv, "e:r:l:w:h:c:b:t:d:a:o:")) != -1) {
       switch (opt) {
          case 'e':
             epochs = atoi(optarg);
@@ -80,6 +83,9 @@ int main (int argc, char *argv[]) {
             break;
          case 'c':
             layerCount = atoi(optarg);
+            break;
+			case 'b':
+            batchSize = atoi(optarg);
             break;
          case 't':
             type = optarg;
@@ -122,17 +128,16 @@ int main (int argc, char *argv[]) {
 
 	std::cout << "Generating Model Layer 1 of " << layerCount << ".\n";
    BasicLayerList* model = new artificialIntelligence::classes::BasicLayerList ();
-	
+
    // input layer
    model->add (inputMatrixes[0]);
-   model->editRootMatrix(inputMatrixes[0]);
+   model->setRootMatrix(inputMatrixes[0]);
 
    // hidden layers
    for (int i = 0; i < layerCount - 2; i++) {
 		std::cout << "Generating Model Layer " << i + 2 << " of " << layerCount << ".\n";
       model->addNew (hiddenLayerLength, hiddenLayerWidth, hiddenLayerHeight);
    }
-   
 
 	std::cout << "Generating Model Layer " << layerCount << " of " << layerCount << ".\n";
    // this is the output layer
@@ -146,8 +151,8 @@ int main (int argc, char *argv[]) {
    // std::cout << "inputCount: " << inputCount << '\n';
    // model->print(true, true);
 	// exit(0);
-	model->print(1,1);
-   artificialIntelligence::basicLearningTypes::generationalAIBasic::run(model, epochs, learningRate, inputMatrixes, outputMatrixes, inputCount, false, false);
+	// model->print(1,1);
+   artificialIntelligence::basicLearningTypes::generationalAIBasic::runStochasticGradientDescent(model, epochs, learningRate, inputMatrixes, outputMatrixes, inputCount, batchSize, false, false);
 	// model->print(1,1);
    model->toFile (outputFile);
 

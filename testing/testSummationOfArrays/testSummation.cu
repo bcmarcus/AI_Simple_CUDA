@@ -1,5 +1,5 @@
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <coreutils/functions/debug/print.cpp>
+#include <coreutils/functions/debug/print.hpp>
 #include <coreutils/util/time.hpp>
 #include <coreutils/util/cudaErrors.cuh>
 #include <iostream>
@@ -151,7 +151,12 @@ float sumMultiplyOfMatrixesHost(Matrix3D* first, Matrix3D* second, int numBlocks
 	// std::cout << "Max byte index: " << maxArrayIndex * sizeof(float) << "\n";
  
 	double totalTime = 0;
-sumMultiplyOfMatrixesHost
+	do {
+		if (sizeLeft - maxArrayIndex < 0) {
+			maxArrayIndex = sizeLeft;
+		}
+		// std::cout << "Max array index " << maxArrayIndex << "\n";
+		// std::cout << "Size left " << sizeLeft << "\n";
 		// std::cout << "Sum should be " << (size - sizeLeft) * 0.05 << "\n";
 		// std::cout << "Sum actually is " << sum << '\n';
 		gpuErrchk(cudaMemcpy(device_firstArr, &firstArr[size - sizeLeft], maxArrayIndex * sizeof(float), cudaMemcpyHostToDevice));
@@ -294,8 +299,8 @@ float summationTest(Matrix3D* m1, int numBlocks, int threads, int numPerThread, 
 
 int main () {
 	int l = 150;
-	int w = 1000;
-	int h = 1000;
+	int w = 100;
+	int h = 100;
 	Matrix3D* m1 = new Matrix3D(l, w, h);
 	Matrix3D* m2 = new Matrix3D(l, w, h);
 
