@@ -2,7 +2,7 @@
 #define GENERATIONAL_AI_BASIC_CUH
 
 #include <coreutils/classes/matrixes/Matrix3D.cuh>
-#include <artificialIntelligence/classes/layerLists/BasicLayerList.cuh>
+#include <artificialIntelligence/classes/layerLists/LayerList.cuh>
 
 namespace artificialIntelligence {
    namespace basicLearningTypes {
@@ -11,8 +11,9 @@ namespace artificialIntelligence {
 			// runs a generic neural network for a certain number of epochs
 			// batch size must be a multiple of inputCount or values will be truncated at the end
          void runStochasticGradientDescent (
-				BasicLayerList* list, 
-				int epochs, 
+				LayerList* list, 
+				int epochs,
+				int GPU,
 				double learningRate, 
 				Matrix3D** inputDataMatrixes, 
 				Matrix3D** outputDataMatrixes, 

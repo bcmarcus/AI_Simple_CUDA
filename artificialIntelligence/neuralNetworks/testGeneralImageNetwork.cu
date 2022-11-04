@@ -7,6 +7,7 @@
 // ./testGeneralImageNetwork.out /../data/mnist_png/mnist_png/mnistTrainedModel1.csv /../data/mnist_png/mnist_png/testing/four/four_0.png /../data/mnist_png/mnist_png/indexToAnswerFile.txt
 
 //	./testGeneralImageNetwork.out /../data/dataset/animalTrainedModel1.csv /../data/dataset/dataset/ /../data/dataset/animalAnswerFile.txt
+//	./testGeneralImageNetwork.out /../data/plantDataset/plantTrainedModel1.csv /../data/plantDataset/dataset/ /../data/plantDataset/plantAnswerFile.txt
 
 
 #include <sys/resource.h>
@@ -71,7 +72,7 @@ int main (int argc, char **argv) {
 	
    BasicLayerList* model = new BasicLayerList (modelPath);
 
-   int numOutputs = model->getLast()->getLayer()->getHeight();
+   int numOutputs = model->getLast()->getLayerMatrix()->getHeight();
 
    string line;
    std::string *indexToAnswerMap = new string[numOutputs]; 
@@ -92,11 +93,11 @@ int main (int argc, char **argv) {
    name = "";
 
    std::string type;
-   if (model->getRoot()->getLayer()->getLength() == 1) {
+   if (model->getRoot()->getLayerMatrix()->getLength() == 1) {
       type = "BW";
-   } else if (model->getRoot()->getLayer()->getLength() == 3) {
+   } else if (model->getRoot()->getLayerMatrix()->getLength() == 3) {
       type = "RGB";
-   } else if (model->getRoot()->getLayer()->getLength() == 4) {
+   } else if (model->getRoot()->getLayerMatrix()->getLength() == 4) {
       type = "RGBA";
    } else {
       std::cout << "Invalid model, invalid input length";
@@ -109,11 +110,11 @@ int main (int argc, char **argv) {
    int correct = 0;
    int* total = new int(0);
    if (std::filesystem::is_regular_file(dataPath)) {
-      testSingleImage(dataPath, model, indexToAnswerMap, type, 5);
+      testSingleImage(dataPath, model, indexToAnswerMap, type, 4);
    } 
    else {
       for (const auto & entry : filesystem::directory_iterator(dataPath)) {
-         correct += testImages(entry.path(), model, indexToAnswerMap, type, total, 5);
+         correct += testImages(entry.path(), model, indexToAnswerMap, type, total, 4);
       }
       std::cout << correct << "/" << *total << " = " << (double) correct / *total * 100 << "%\n\n";
    }
@@ -140,16 +141,15 @@ int testImages (std::string dataPath, BasicLayerList* model, std::string* indexT
 
 bool testSingleImage(std::string dataPath, BasicLayerList* model, std::string* indexToAnswerMap, std::string type, int amountShown) {
    Matrix3D* inputMatrix;
-   Matrix3D* outputMatrix = new Matrix3D (1, 1, model->getLast()->getLayer()->getHeight());
-
+   Matrix3D* outputMatrix = new Matrix3D (1, 1, model->getLast()->getLayerMatrix()->getHeight());
    int startOfDirectoryIndex = 0;
 
    
-   generate::inputMatrixNormalized(dataPath, &inputMatrix, 0, type);
+   generate::inputMatrixNormalized(dataPath, &inputMatrix, 0, type, model->getRoot()->getLayerMatrix()->getWidth(), model->getRoot()->getLayerMatrix()->getHeight());
 
    int index = -1;
-   for (int i = 0; i < model->getLast()->getLayer()->getHeight(); i++) {
-      if (dataPath.find(indexToAnswerMap[i], dataPath.find_last_of("/")) != std::string::npos) {
+   for (int i = 0; i < model->getLast()->getLayerMatrix()->getHeight(); i++) {
+      if (dataPath.find(indexToAnswerMap[i]) != std::string::npos) {
          index = i;
          break;
       }
@@ -161,7 +161,7 @@ bool testSingleImage(std::string dataPath, BasicLayerList* model, std::string* i
    }
 
    outputMatrix->insert(1, 0, 0, index);
-   model->setRootMatrix(inputMatrix);
+   model->copyRootMatrix(inputMatrix);
 
 	// tentative before GPU change
 	// inputMatrix->printMatrix();
@@ -177,12 +177,12 @@ bool testSingleImage(std::string dataPath, BasicLayerList* model, std::string* i
       topIndexes[i] = 0;
    }
    for (int k = 0; k < outputMatrix->getHeight(); k++) {
-      if (*(model->getLast()->getLayer()->getData(0, 0, k)) > topValues[0]) {
-         topValues[0] = *(model->getLast()->getLayer()->getData(0, 0, k));
+      if (*(model->getLast()->getLayerMatrix()->getData(0, 0, k)) > topValues[0]) {
+         topValues[0] = *(model->getLast()->getLayerMatrix()->getData(0, 0, k));
          topIndexes[0] = k;
          int* order = insertionSort(topValues, amountShown);
-         
          for (int j = 0; j < amountShown; j++) {
+            // std::cout << j << '\n';
             if (order[j] == 0) {
                break;
             }
@@ -201,6 +201,6 @@ bool testSingleImage(std::string dataPath, BasicLayerList* model, std::string* i
 
    return topIndexes[0] == index;
 
-   // model->getLast()->getLayer()->printMatrix();
+   // model->getLast()->getLayerMatrix()->printMatrix();
    // outputMatrix->printMatrix();
 }

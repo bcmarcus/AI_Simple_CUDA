@@ -28,22 +28,24 @@ void test1() {
 	int w2 = 2;
 	int h2 = 2;
 	model->addNew(l2, w2, h2);
-	model->getRoot()->getNext()->getLayer()->setAll(1);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
 
 	model->getRoot()->getWeights()->setAll(2);
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
-	deltaPrev->setAll(1);
+	Matrix3D* deltaPrevCPU = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	deltaPrevCPU->setAll(1);
+	Matrix3D* deltaPrevGPU = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	deltaPrevGPU->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	currentLayerCPU->updateWeightsCPU(deltaPrev, LEARNING_RATE);
+	currentLayerCPU->updateWeightsCPU(deltaPrevCPU, LEARNING_RATE);
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
 	// currentLayerCPU->print(0, 1);
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	currentLayerGPU->updateWeightsGPU(deltaPrev, LEARNING_RATE);
+	currentLayerGPU->updateWeightsGPU(deltaPrevGPU, LEARNING_RATE);
 	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
 	
 	std::cout << "::::RESULTS::::\n";
@@ -53,7 +55,8 @@ void test1() {
 	std::cout << "EQUALS: " << currentLayerCPU->getWeights()->getWeightMatrix(0)->equals(currentLayerGPU->getWeights()->getWeightMatrix(0)) << '\n';
 	// currentLayerGPU->print(0, 1);
 	delete model;
-	delete currentLayerGPU;
+	delete deltaPrevCPU;
+	delete deltaPrevGPU;
 }
 
 void test1random() {
@@ -72,7 +75,7 @@ void test1random() {
 	
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -93,7 +96,7 @@ void test1random() {
 	// currentLayerGPU->print(0, 1);
 
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test2() {
@@ -108,14 +111,14 @@ void test2() {
 	int w2 = 1;
 	int h2 = 2;
 	model->addNew(l2, w2, h2);
-	model->getRoot()->getNext()->getLayer()->setAll(1);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
 	
 
 	model->getRoot()->getWeights()->setAll(2);
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -136,7 +139,7 @@ void test2() {
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test2random() {
@@ -155,7 +158,7 @@ void test2random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -176,7 +179,7 @@ void test2random() {
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test3() {
@@ -191,7 +194,7 @@ void test3() {
 	int w2 = 2;
 	int h2 = 3;
 	model->addNew(l2, w2, h2);
-	model->getRoot()->getNext()->getLayer()->setAll(1);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
 	
 	
 
@@ -199,7 +202,7 @@ void test3() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -220,7 +223,7 @@ void test3() {
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test3random() {
@@ -239,7 +242,7 @@ void test3random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -260,7 +263,7 @@ void test3random() {
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test4() {
@@ -275,14 +278,14 @@ void test4() {
 	int w2 = 17;
 	int h2 = 11;
 	model->addNew(l2, w2, h2);
-	model->getRoot()->getNext()->getLayer()->setAll(1);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
 	
 
 	model->getRoot()->getWeights()->setAll(2);
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -303,7 +306,7 @@ void test4() {
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test4random() {
@@ -322,7 +325,7 @@ void test4random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -343,7 +346,7 @@ void test4random() {
 	// currentLayerCPU->print(0, 1);
 
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test45random() {
@@ -358,7 +361,7 @@ void test45random() {
 	int w2 = 5;
 	int h2 = 25;
 	model->addNew(l2, w2, h2);
-	model->getRoot()->getNext()->getLayer()->setAll(1);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
 	
 
 	// model->getRoot()->getWeights()->setAll(2);
@@ -367,7 +370,7 @@ void test45random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -388,7 +391,7 @@ void test45random() {
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 
@@ -404,14 +407,14 @@ void test5() {
 	int w2 = 100;
 	int h2 = 100;
 	model->addNew(l2, w2, h2);
-	model->getRoot()->getNext()->getLayer()->setAll(1);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
 	
 
 	model->getRoot()->getWeights()->setAll(2);
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -434,7 +437,7 @@ void test5() {
 	// currentLayerCPU->getWeights()->getWeightMatrix(0)->printMatrix();
 	// currentLayerGPU->getWeights()->getWeightMatrix(23)->printMatrix();
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 void test5random() {
@@ -453,7 +456,7 @@ void test5random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayer()->getLength(), model->getRoot()->getNext()->getLayer()->getWidth(), model->getRoot()->getNext()->getLayer()->getHeight());
+	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -474,7 +477,7 @@ void test5random() {
 	 									currentLayerCPU->getWeights()->getWeightMatrix(4)->equals(currentLayerGPU->getWeights()->getWeightMatrix(4),  0.00001) &&
 										currentLayerCPU->getWeights()->getWeightMatrix(5)->equals(currentLayerGPU->getWeights()->getWeightMatrix(5),  0.00001)) << '\n';
 	delete model;
-	delete currentLayerGPU;
+
 }
 
 int main() {

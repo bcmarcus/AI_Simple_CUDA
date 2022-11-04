@@ -5,11 +5,12 @@
 #include <sys/resource.h>
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
-#include <imageEdit/generate/generateInput.hpp>
+#include <Image_Manipulation/generate/generateInput.hpp>
 
-#include <coreutils/functions/sort/sortHelpers.cpp>
-#include <coreutils/functions/sort/sortingAlgorithms.cpp>
+#include <coreutils/functions/sort/sortHelpers.hpp>
+#include <coreutils/functions/sort/sortingAlgorithms.hpp>
 
 using namespace std;
 using namespace imageEdit;

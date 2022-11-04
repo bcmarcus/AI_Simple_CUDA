@@ -242,10 +242,15 @@ void BasicWeight::build(int outputSize, int size, int length, int width, int hei
 // -- PRINT METHODS -- // 
 
 // prints all of the weights
-int BasicWeight::print () {
-	this->weights->printMatrix();
+void BasicWeight::print () {
+	if (this->weights != nullptr) {
+		this->weights->printMatrix();
+	}
 	if (this->next != nullptr) {
 		this->next->print();
 	}
-   return 1;
+}
+
+long long BasicWeight::paramCount () {
+	return this->size;
 }

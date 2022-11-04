@@ -13,7 +13,12 @@ using namespace coreutils::classes::matrixes;
 namespace artificialIntelligence {
    namespace classes {
       class WeightBase {
-			
+         public:
+            virtual void setAll (double x) = 0;
+
+			   virtual void print () = 0;
+
+            virtual long long paramCount () = 0;
 		};
 	}
 }

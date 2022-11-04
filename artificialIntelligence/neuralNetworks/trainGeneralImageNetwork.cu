@@ -24,13 +24,15 @@ using namespace imageEdit;
 using namespace coreutils::classes::matrixes;
 using namespace coreutils::functions;
 
-void loadImages (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size);
+#define MAXCOUNT -1
 
-void loadImagesHelper (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size, int* index);
+void loadImages (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size, int imageWidth, int imageLength);
+
+void loadImagesHelper (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size, int* index, int imageWidth, int imageLength);
 
 int countImages(std::string inputImageFolder, std::string indexToAnswerPath, map<std::string, int>& answerToIndex);
 
-int countImagesHelper (std::string inputImageFolder, ofstream &indexToAnswerFile, map<std::string, int>& answerToIndex, int* index);
+int countImagesHelper (std::string inputImageFolder, ofstream &indexToAnswerFile, map<std::string, int>& answerToIndex, int* index, int depth = 0);
 
 void help (char *argv[]) {
    fprintf(stderr, "Usage: %s [-e epochs] [-r learningRate] [-l length] [-w width] [-h height] [-c layer count] [-b batch size] [-t type of image (BW, RGB, RGBA)] [-d path to data (required)] [-a index to answer file (required)] [-o model output file (required)]\n",argv[0]);
@@ -51,7 +53,9 @@ int main (int argc, char *argv[]) {
    int hiddenLayerLength = 1; 
    int hiddenLayerWidth = 10;
    int hiddenLayerHeight = 100;
-	int batchSize = 0;
+	int batchSize = 4;
+   int imageLength = 240;
+   int imageWidth = 320;
 
    // layerCount - 2 = hiddenLayerCount
    int layerCount = 5;
@@ -64,7 +68,7 @@ int main (int argc, char *argv[]) {
    *currentPath += "/../../../artificialIntelligence/neuralNetworks";
    filesystem::current_path(filesystem::path(*currentPath));
 
-   while ((opt = getopt(argc, argv, "e:r:l:w:h:c:b:t:d:a:o:")) != -1) {
+   while ((opt = getopt(argc, argv, "e:r:l:w:h:c:b:t:d:a:o:n:m:")) != -1) {
       switch (opt) {
          case 'e':
             epochs = atoi(optarg);
@@ -101,6 +105,12 @@ int main (int argc, char *argv[]) {
          case 'o':
             outputFile = optarg;
             break;
+         case 'n':
+            imageLength = atoi(optarg);
+            break;
+         case 'm':
+            imageWidth = atoi(optarg);
+            break;
          default: /* '?' */ 
             help(argv);
          }
@@ -122,7 +132,7 @@ int main (int argc, char *argv[]) {
    Matrix3D** inputMatrixes = new Matrix3D* [inputCount];
    Matrix3D** outputMatrixes = new Matrix3D* [inputCount];
 
-   loadImages (inputImageFolder, inputMatrixes, outputMatrixes, answerToIndex, type, inputCount);
+   loadImages (inputImageFolder, inputMatrixes, outputMatrixes, answerToIndex, type, inputCount, imageWidth, imageLength);
 
    std::cout << "100.00 percent of the images have been loaded\n";
 
@@ -131,7 +141,7 @@ int main (int argc, char *argv[]) {
 
    // input layer
    model->add (inputMatrixes[0]);
-   model->setRootMatrix(inputMatrixes[0]);
+   model->copyRootMatrix(inputMatrixes[0]);
 
    // hidden layers
    for (int i = 0; i < layerCount - 2; i++) {
@@ -149,9 +159,22 @@ int main (int argc, char *argv[]) {
    // std::cout << "epochs: " << epochs << '\n';
    // std::cout << "learningRate: " << learningRate << '\n';
    // std::cout << "inputCount: " << inputCount << '\n';
-   // model->print(true, true);
+   // model->print(false, false);
 	// exit(0);
 	// model->print(1,1);
+
+   if (MAXCOUNT >= 1 && MAXCOUNT < inputCount) {
+      inputCount = MAXCOUNT;
+   }
+
+   outputMatrixes[0]->printMatrix();
+   outputMatrixes[500]->printMatrix();
+   outputMatrixes[1000]->printMatrix();
+   outputMatrixes[3000]->printMatrix();
+   outputMatrixes[5000]->printMatrix();
+
+   outputMatrixes[0]->printMatrixSize();
+
    artificialIntelligence::basicLearningTypes::generationalAIBasic::runStochasticGradientDescent(model, epochs, learningRate, inputMatrixes, outputMatrixes, inputCount, batchSize, false, false);
 	// model->print(1,1);
    model->toFile (outputFile);
@@ -164,37 +187,57 @@ int main (int argc, char *argv[]) {
    std::cout << "\nMemory used (MB): " << usage.ru_maxrss / 1000000 << "\n\n";
 }
 
-void loadImages (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size) {
+void loadImages (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size, int imageWidth, int imageLength) {
    int* index = new int(0);
    for (const auto & entry : filesystem::directory_iterator(inputImageFolder)) {
       std::cout << "name: " << entry.path() << " \n"; 
-      loadImagesHelper (entry.path(), inputMatrixes, outputMatrixes, answerToIndex, type, size, index);
+      loadImagesHelper (entry.path(), inputMatrixes, outputMatrixes, answerToIndex, type, size, index, imageWidth, imageLength);
    }
    std::cout << "\nThe images have finished loading. \n\n\n";
 }
 
-void loadImagesHelper (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size, int* index) {
-   //answerToIndex.at("tursiops-truncatus")
+void loadImagesHelper (std::string inputImageFolder, Matrix3D **inputMatrixes, Matrix3D **outputMatrixes, map<std::string, int>& answerToIndex, std::string type, int size, int* index, int imageWidth, int imageLength) {
+   
+
+
+   //***TESTING***///
+   if (*index == MAXCOUNT) {
+      return;
+   }
+
+
+
    if (inputImageFolder.find(".DS_Store") != std::string::npos) {
       std::cout << inputImageFolder.find(".DS_Store");
       return;
    }
+
+   // its a file
    if (!std::filesystem::is_directory(inputImageFolder)) {
       std::cout << "name: " << inputImageFolder << " "; 
-      generate::inputMatrixNormalized(inputImageFolder, inputMatrixes, *index, type);
-
+      generate::inputMatrixNormalized(inputImageFolder, inputMatrixes, *index, type, imageWidth, imageLength);
+      
       // make the output
       Matrix3D* output = new Matrix3D (1, 1, answerToIndex.size());
       int last = inputImageFolder.find_last_of("/");
-      std::string name = inputImageFolder.substr(last + 1, inputImageFolder.find("_", (last + 1)) - last - 1);
-      output->insert(1, 0, 0, answerToIndex.at(name));
+      int secondLast = inputImageFolder.rfind("/", last - 1);
+      std::string name = inputImageFolder.substr(secondLast + 1, last - secondLast - 1);
+
+      for (auto it = answerToIndex.begin(); it != answerToIndex.end(); ++it) {
+         if (inputImageFolder.find(it->first) != std::string::npos) {
+            output->insert(1, 0, 0, answerToIndex.at(it->first));
+            break;
+         }
+      }
+
       outputMatrixes[*index] = output;
       (*index)++;
       std::cout << *index << "/" << size << " loaded\n";
       return;
    }
+
    for (const auto & entry : filesystem::directory_iterator(inputImageFolder)) {
-      loadImagesHelper (entry.path(), inputMatrixes, outputMatrixes, answerToIndex, type, size, index);
+      loadImagesHelper (entry.path(), inputMatrixes, outputMatrixes, answerToIndex, type, size, index, imageWidth, imageLength);
    }
 }
 
@@ -209,24 +252,26 @@ int countImages(std::string inputImageFolder, std::string indexToAnswerPath, map
    return countImagesHelper(inputImageFolder, indexToAnswerFile, answerToIndex, &index);
 }
 
-int countImagesHelper (std::string inputImageFolder, ofstream &indexToAnswerFile, map<std::string, int>& answerToIndex, int* index) {
+int countImagesHelper (std::string inputImageFolder, ofstream &indexToAnswerFile, map<std::string, int>& answerToIndex, int* index, int depth) {
+
+   // its a file
    if (!std::filesystem::is_directory(inputImageFolder)) {
       return 1;
    }
+
+   // its a dir
    int count = 0;
    std::vector<std::filesystem::path> files_in_directory;
    std::copy(std::filesystem::directory_iterator(inputImageFolder), std::filesystem::directory_iterator(), std::back_inserter(files_in_directory));
-
    for (const std::string & entry : files_in_directory) {
       if (entry.find(".DS_Store") == std::string::npos) {
-         count += countImagesHelper(entry, indexToAnswerFile, answerToIndex, index);
+         count += countImagesHelper(entry, indexToAnswerFile, answerToIndex, index, depth + 1);
 
          // if it got a file in the next folder, use this directory name as the name for the answer file
-         if (count == 1) {
-            std::cout << "\n" << entry << "\n";
-            if (inputImageFolder.find_last_of("/") != std::string::npos) {
-               std::string name = inputImageFolder.substr(inputImageFolder.find_last_of("/") + 1, inputImageFolder.length() - inputImageFolder.find_last_of("/") - 1);
-               std::cout<< *index << " " << name << "\n";
+         if (depth == 0) {
+            if (entry.find_last_of("/") != std::string::npos) {
+               std::string name = entry.substr(entry.find_last_of("/") + 1, entry.length() - entry.find_last_of("/") - 1);
+               std::cout << *index << " " << name << "\n";
                indexToAnswerFile << *index << " " << name << "\n";
                answerToIndex.insert(pair<std::string, int>(name, *index));
                (*index)++;
@@ -234,6 +279,7 @@ int countImagesHelper (std::string inputImageFolder, ofstream &indexToAnswerFile
          }
       }
    }
+
    return count;
 
 }

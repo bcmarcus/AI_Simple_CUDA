@@ -90,7 +90,9 @@ namespace artificialIntelligence {
             // -- PRINT METHODS -- // 
 
 				// prints all of the weights
-				int print ();
+				void print ();
+
+				long long paramCount ();
       };
    }
 }

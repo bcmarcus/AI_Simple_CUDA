@@ -28,6 +28,7 @@ BasicLayerList::BasicLayerList (Matrix3D* layer, Matrix3D* biasMatrix, BasicWeig
 BasicLayerList::BasicLayerList (std::string filepath) {
    std::ifstream inputFile (filepath);
    if (inputFile.good() == false) {
+      std::cout << "Bad input file\n";
       exit(0);
    }
    this->root = BasicLayer::loadFromFile(&inputFile);
@@ -65,7 +66,7 @@ BasicLayer* BasicLayerList::getLast () {
 // sets the root matrix
 void BasicLayerList::setRootMatrix (Matrix3D* newMatrix) {
    if (this->root != nullptr) {
-      this->root->setLayer(newMatrix);
+      this->root->setLayerMatrix(newMatrix);
    }
 }
 
@@ -74,7 +75,7 @@ void BasicLayerList::setRootMatrix (Matrix3D* newMatrix) {
 // adds a layer at the end of the model recursively 
 void BasicLayerList::add (BasicLayer* layer) {
    if (this->last != nullptr) {
-      this->last = ((BasicLayer*) (this->last))->add(layer);
+      this->last = this->last->add(layer, 0);
    } else {
       this->root = layer;
       this->last = this->root;
@@ -86,9 +87,9 @@ void BasicLayerList::add (Matrix3D* layerMatrix, Matrix3D* biasMatrix, BasicWeig
    if (this->root == nullptr) {
       this->root = new BasicLayer (layerMatrix, biasMatrix, weights);
    } else {
-      this->root = ((BasicLayer*) (this->root))->add(layerMatrix, biasMatrix, weights);
+      this->root = (BasicLayer*) this->root->add(new BasicLayer (layerMatrix, biasMatrix, weights), 0);
    }
-   this->last = ((BasicLayer*) (this->root))->getLast();
+   this->last = (BasicLayer*) this->root->getLast();
 }
 
 // creates and adds a layer at the end of the model recursively
@@ -98,7 +99,7 @@ void BasicLayerList::addNew (int length, int width, int height) {
    if (this->root == nullptr) {
       this->root = new BasicLayer (layerMatrix);
    } else {
-      ((BasicLayer*) (this->root))->add(layerMatrix);
+      ((BasicLayer*) (this->root))->add(new BasicLayer (layerMatrix), 0);
    }
    this->last = ((BasicLayer*) (this->root))->getLast();
 }
@@ -139,8 +140,8 @@ void BasicLayerList::calculateAndUpdateAllGPUV2 () {
 // prints the entire model
 void BasicLayerList::print (bool printBias, bool printWeights) {
    if (this->root != nullptr) {
-      int depth = ((BasicLayer*) (this->root))->print(printBias, printWeights);
-      std::cout << "There are " << depth << " total layers\n";
+      this->root->print(printBias, printWeights);
+      std::cout << "Total Parameters: " << this->totalParamCount << "\n\n";
    } else {
       std::cout << "No root layer initialized!\n";
    }

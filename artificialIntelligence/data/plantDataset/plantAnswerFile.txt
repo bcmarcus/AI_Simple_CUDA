@@ -1,0 +1,4 @@
+0 poisonous_sporocarp
+1 edible_mushroom_sporocarp
+2 poisonous_mushroom_sporocarp
+3 edible_sporocarp

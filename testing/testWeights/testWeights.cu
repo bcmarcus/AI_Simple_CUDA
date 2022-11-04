@@ -38,7 +38,7 @@ void test6() {
 	
 	model->addNew(1, 1, 1);
 
-	model->getRoot()->getLayer()->randomize();
+	model->getRoot()->getLayerMatrix()->randomize();
 	model->getRoot()->getNext()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getNext()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getNext()->getNext()->getWeights()->setAll(0);
@@ -47,8 +47,8 @@ void test6() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	double val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
+	double val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -60,7 +60,7 @@ void test6() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
 	delete model;
 }
 
@@ -95,8 +95,8 @@ void test6random() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	double val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
+	double val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -108,7 +108,7 @@ void test6random() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
 	delete model;
 }
 
@@ -136,7 +136,7 @@ void test7() {
 	
 	model->addNew(1, 1, 1);
 
-	model->getRoot()->getLayer()->setAll(1);
+	model->getRoot()->getLayerMatrix()->setAll(1);
 	model->getRoot()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getNext()->getWeights()->setAll(0);
@@ -146,8 +146,8 @@ void test7() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	double val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
+	double val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -159,7 +159,7 @@ void test7() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
 	delete model;
 }
 
@@ -192,8 +192,8 @@ void test7random() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	double val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
+	double val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -205,7 +205,7 @@ void test7random() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
 	delete model;
 }
 
@@ -233,7 +233,7 @@ void test8() {
 
 	model->addNew(1, 1, 1);
 
-	model->getRoot()->getLayer()->setAll(1);
+	model->getRoot()->getLayerMatrix()->setAll(1);
 	model->getRoot()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getNext()->getWeights()->setAll(0);
@@ -243,8 +243,8 @@ void test8() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	double val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
+	double val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -256,7 +256,7 @@ void test8() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
 	delete model;
 }
 
@@ -289,8 +289,8 @@ void test8random() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	double val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
+	double val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 	
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -302,7 +302,7 @@ void test8random() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
 	delete model;
 }
 
@@ -332,7 +332,7 @@ void test9() {
 	model->addNew(1, 1, 1);
 	
 	// model->getRoot()->getLayerMatrix()->randomize();
-	model->getRoot()->getLayer()->setAll(1);
+	model->getRoot()->getLayerMatrix()->setAll(1);
 	model->getRoot()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getNext()->getWeights()->setAll(0);
@@ -343,10 +343,10 @@ void test9() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
+	val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
 
-	Matrix3D* test = new Matrix3D(*model->getRoot()->getNext()->getNext()->getNext()->getLayer());
+	Matrix3D* test = new Matrix3D(*model->getRoot()->getNext()->getNext()->getNext()->getLayerMatrix());
 	
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -358,8 +358,8 @@ void test9() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
-	std::cout << "EQUALS: " << test->equals(model->getRoot()->getNext()->getNext()->getNext()->getLayer()) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
+	std::cout << "EQUALS: " << test->equals(model->getRoot()->getNext()->getNext()->getNext()->getLayerMatrix()) << '\n';
 	delete model;
 	delete test;
 }
@@ -395,9 +395,9 @@ void test9random() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
-	Matrix3D* test = new Matrix3D(*model->getRoot()->getNext()->getNext()->getNext()->getLayer());
+	val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
+	Matrix3D* test = new Matrix3D(*model->getRoot()->getNext()->getNext()->getNext()->getLayerMatrix());
 
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -411,8 +411,8 @@ void test9random() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
-	std::cout << "EQUALS: " << test->equals(model->getRoot()->getNext()->getLayer()) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
+	std::cout << "EQUALS: " << test->equals(model->getRoot()->getNext()->getLayerMatrix()) << '\n';
 	delete model;
 	delete test;
 }
@@ -441,8 +441,8 @@ void test10() {
 
 	model->addNew(1, 1, 1);
 	
-	model->getRoot()->getLayer()->randomize();
-	model->getRoot()->getLayer()->setAll(1);
+	model->getRoot()->getLayerMatrix()->randomize();
+	model->getRoot()->getLayerMatrix()->setAll(1);
 	model->getRoot()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getWeights()->setAll(0);
 	model->getRoot()->getNext()->getNext()->getWeights()->setAll(0);
@@ -454,14 +454,14 @@ void test10() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
-	Matrix3D* test = new Matrix3D(*model->getRoot()->getLast()->getLayer());
+	val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
+	Matrix3D* test = new Matrix3D(*model->getRoot()->getLast()->getLayerMatrix());
 
 	model->getLast()->getPrev()->print();
-	model->getRoot()->getNext()->getLayer()->setAll(0);
-	model->getRoot()->getNext()->getNext()->getLayer()->setAll(0);
-	model->getRoot()->getNext()->getNext()->getNext()->getLayer()->setAll(0);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(0);
+	model->getRoot()->getNext()->getNext()->getLayerMatrix()->setAll(0);
+	model->getRoot()->getNext()->getNext()->getNext()->getLayerMatrix()->setAll(0);
 
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -473,8 +473,8 @@ void test10() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
-	std::cout << "EQUALS: " << test->equals(model->getRoot()->getLast()->getLayer()) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
+	std::cout << "EQUALS: " << test->equals(model->getRoot()->getLast()->getLayerMatrix()) << '\n';
 	delete model;
 	delete test;
 }
@@ -502,7 +502,7 @@ void test10random() {
 
 	model->addNew(1, 1, 1);
 	
-	model->getRoot()->getLayer()->randomize();
+	model->getRoot()->getLayerMatrix()->randomize();
 	
 	double val = 0;
 
@@ -510,14 +510,14 @@ void test10random() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
-	Matrix3D* test = new Matrix3D(*model->getRoot()->getLast()->getLayer());
+	val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
+	Matrix3D* test = new Matrix3D(*model->getRoot()->getLast()->getLayerMatrix());
 
 	model->getLast()->getPrev()->print();
-	model->getRoot()->getNext()->getLayer()->setAll(0);
-	model->getRoot()->getNext()->getNext()->getLayer()->setAll(0);
-	model->getRoot()->getNext()->getNext()->getNext()->getLayer()->setAll(0);
+	model->getRoot()->getNext()->getLayerMatrix()->setAll(0);
+	model->getRoot()->getNext()->getNext()->getLayerMatrix()->setAll(0);
+	model->getRoot()->getNext()->getNext()->getNext()->getLayerMatrix()->setAll(0);
 
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -530,8 +530,8 @@ void test10random() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
-	std::cout << "EQUALS: " << test->equals(model->getRoot()->getLast()->getLayer()) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
+	std::cout << "EQUALS: " << test->equals(model->getRoot()->getLast()->getLayerMatrix()) << '\n';
 	delete model;
 	delete test;
 }
@@ -571,9 +571,9 @@ void test11random() {
 	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
 	model->calculateAndUpdateAllCPU();
 	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	val = *model->getLast()->getLayer()->getData(0, 0, 0);
-	model->getLast()->getLayer()->insert(-17, 0, 0, 0);
-	Matrix3D* test = new Matrix3D(*model->getRoot()->getLast()->getLayer());
+	val = *model->getLast()->getLayerMatrix()->getData(0, 0, 0);
+	model->getLast()->getLayerMatrix()->insert(-17, 0, 0, 0);
+	Matrix3D* test = new Matrix3D(*model->getRoot()->getLast()->getLayerMatrix());
 
 	std::cout << ":::STARTING GPU TESTS:::\n";
 	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
@@ -585,8 +585,8 @@ void test11random() {
 	std::cout << "CPU ANSWER: " << val << '\n';
 
 	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	std::cout << "GPU ANSWER: " << *model->getLast()->getLayer()->getData(0, 0, 0) << '\n';
-	std::cout << "EQUALS: " << test->equals(model->getRoot()->getLast()->getLayer()) << '\n';
+	std::cout << "GPU ANSWER: " << *model->getLast()->getLayerMatrix()->getData(0, 0, 0) << '\n';
+	std::cout << "EQUALS: " << test->equals(model->getRoot()->getLast()->getLayerMatrix()) << '\n';
 	delete model;
 	delete test;
 }
