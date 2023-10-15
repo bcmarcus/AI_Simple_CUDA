@@ -4,7 +4,7 @@
 #include <coreutils/util/time.hpp>
 #include <coreutils/util/cudaErrors.cuh>
 
-#include <coreutils/classes/matrixes/Matrix3D.cuh>
+#include <coreutils/classes/matrixes/Tensor.cuh>
 #include <coreutils/functions/debug/print.hpp>
 
 #include <artificialIntelligence/classes/weights/BasicWeight.cuh>
@@ -20,7 +20,7 @@ void test1() {
 	int l = 2;
 	int w = 2;
 	int h = 2;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
@@ -33,9 +33,9 @@ void test1() {
 	model->getRoot()->getWeights()->setAll(2);
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrevCPU = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrevCPU = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrevCPU->setAll(1);
-	Matrix3D* deltaPrevGPU = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrevGPU = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrevGPU->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -63,7 +63,7 @@ void test1random() {
 	int l = 2;
 	int w = 2;
 	int h = 2;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 2;
@@ -75,7 +75,7 @@ void test1random() {
 	
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -103,7 +103,7 @@ void test2() {
 	int l = 1;
 	int w = 2;
 	int h = 3;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
@@ -118,7 +118,7 @@ void test2() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -146,7 +146,7 @@ void test2random() {
 	int l = 1;
 	int w = 2;
 	int h = 3;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 2;
@@ -158,7 +158,7 @@ void test2random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -186,7 +186,7 @@ void test3() {
 	int l = 2;
 	int w = 2;
 	int h = 3;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
@@ -202,7 +202,7 @@ void test3() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -230,7 +230,7 @@ void test3random() {
 	int l = 2;
 	int w = 2;
 	int h = 3;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 2;
@@ -242,7 +242,7 @@ void test3random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -270,7 +270,7 @@ void test4() {
 	int l = 10;
 	int w = 30;
 	int h = 82;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
@@ -285,7 +285,7 @@ void test4() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -313,7 +313,7 @@ void test4random() {
 	int l = 10;
 	int w = 30;
 	int h = 82;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 6;
@@ -325,7 +325,7 @@ void test4random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -353,7 +353,7 @@ void test45random() {
 	int l = 1;
 	int w = 5;
 	int h = 105;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
@@ -370,7 +370,7 @@ void test45random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -399,7 +399,7 @@ void test5() {
 	int l = 3;
 	int w = 228;
 	int h = 228;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	root->setAll(1);
 	BasicLayerList* model = new BasicLayerList(root);
 	
@@ -414,7 +414,7 @@ void test5() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->setAll(1);
 
 	std::cout << ":::STARTING CPU TESTS:::\n";
@@ -444,7 +444,7 @@ void test5random() {
 	int l = 3;
 	int w = 228;
 	int h = 228;
-	Matrix3D* root = new Matrix3D(l, w, h);
+	Tensor* root = new Tensor(l, w, h);
 	BasicLayerList* model = new BasicLayerList(root);
 	
 	int l2 = 1;
@@ -456,7 +456,7 @@ void test5random() {
 
 	BasicLayer* currentLayerCPU = model->getRoot();
 	BasicLayer* currentLayerGPU = new BasicLayer (*currentLayerCPU, true);
-	Matrix3D* deltaPrev = new Matrix3D(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
+	Tensor* deltaPrev = new Tensor(model->getRoot()->getNext()->getLayerMatrix()->getLength(), model->getRoot()->getNext()->getLayerMatrix()->getWidth(), model->getRoot()->getNext()->getLayerMatrix()->getHeight());
 	deltaPrev->randomize();
 
 	std::cout << ":::STARTING CPU TESTS:::\n";

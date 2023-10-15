@@ -19,7 +19,7 @@ NVCCOBJS = src/testUpdateWeights.o \
 	src/BasicLayer.o \
 	src/BasicWeight.o \
 	src/activationFunctions.o \
-	src/Matrix3D.o
+	src/Tensor.o
 
 CPPOBJS =
 
@@ -31,22 +31,22 @@ linkCPU: $(CPPOBJS) $(NVCCOBJS) src/gpuCode.o
 src/gpuCode.o: $(NVCCOBJS)
 	$(NVCC) --device-link -o $@ $^ $(LINKFLAGS) $(NVLINKFLAGS) $(CPPOBJS)
 
-src/Matrix3D.o: $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cu
+src/Tensor.o: $(INCLUDE)coreutils/classes/matrixes/Tensor.cu
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/activationFunctions.o: $(INCLUDE)artificialIntelligence/functions/activationFunctions.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/activationFunctions.o: $(INCLUDE)artificialIntelligence/functions/activationFunctions.cu $(INCLUDE)coreutils/classes/matrixes/Tensor.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/BasicWeight.o: $(INCLUDE)artificialIntelligence/classes/weights/BasicWeight.cu $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/BasicWeight.o: $(INCLUDE)artificialIntelligence/classes/weights/BasicWeight.cu $(INCLUDE)coreutils/classes/matrixes/Tensor.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/layers/BasicLayer.cu $(INCLUDE)artificialIntelligence/classes/weights/BasicWeight.cuh $(INCLUDE)artificialIntelligence/functions/activationFunctions.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/BasicLayer.o: $(INCLUDE)artificialIntelligence/classes/layers/BasicLayer.cu $(INCLUDE)artificialIntelligence/classes/weights/BasicWeight.cuh $(INCLUDE)artificialIntelligence/functions/activationFunctions.cuh $(INCLUDE)coreutils/classes/matrixes/Tensor.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/layerLists/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/layers/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/BasicLayerList.o: $(INCLUDE)artificialIntelligence/classes/layerLists/BasicLayerList.cu $(INCLUDE)artificialIntelligence/classes/layers/BasicLayer.cuh $(INCLUDE)coreutils/classes/matrixes/Tensor.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
-src/testUpdateWeights.o : $(INCLUDE)testing/testUpdateWeights/testUpdateWeights.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/layerLists/BasicLayerList.cuh $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cuh $(INCLUDE)coreutils/classes/matrixes/Matrix3D.cuh
+src/testUpdateWeights.o : $(INCLUDE)testing/testUpdateWeights/testUpdateWeights.cu  $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cu $(INCLUDE)artificialIntelligence/classes/layerLists/BasicLayerList.cuh $(INCLUDE)artificialIntelligence/basicLearningTypes/generationalAIBasic.cuh $(INCLUDE)coreutils/classes/matrixes/Tensor.cuh
 	$(NVCC) $(NVFLAGS) $< -o $@
 
 clean1: 
