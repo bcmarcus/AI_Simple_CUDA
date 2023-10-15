@@ -41,10 +41,12 @@ ConvLayer::ConvLayer (Matrix3D* layerMatrix, Matrix3D* biasMatrix, ConvWeight* w
 }
 
 
-ConvLayer::ConvLayer (int length, int width, int height, int convLength, int convWidth, int convHeight, int features, int stride, ActivationType activationType) {
-	this->layerMatrixes = new Matrix3D* [1];
-	this->layerMatrixes[0] = new Matrix3D (length, width, height);
-	this->getLayerMatrix(0)->randomize();
+ConvLayer::ConvLayer (int length, int width, int height, int convLength, int convWidth, int convHeight, int features, int stride, int layerMatrixCount, ActivationType activationType) {
+	this->layerMatrixes = new Matrix3D* [layerMatrixCount];
+	this->layerMatrixCount = 0;
+	for (int i = 0; i < layerMatrixCount; i++) {
+		this->setLayerMatrix (new Matrix3D (length, width, height), i);
+	}
 	this->biasMatrixes = new Matrix3D*[1];
 	this->biasMatrixes[0] = nullptr;
 	this->weights = (WeightBase**) new ConvWeight*[1];
@@ -54,7 +56,6 @@ ConvLayer::ConvLayer (int length, int width, int height, int convLength, int con
 	this->prev = (LayerBase**) new ConvLayer*[1];
 	this->prev[0] = nullptr;
 
-	this->layerMatrixCount = 1;
 	this->biasCount = 0;
 	this->weightsCount = 0;
 	this->nextCount = 0;
@@ -99,6 +100,9 @@ ConvLayer::ConvLayer () {
 	this->stride = 0;
 }
 
+int ConvLayer::getFeatureCount () const {
+	return this->features;
+}
 
 ConvLayer::~ConvLayer () { 
    if (this->getLayerMatrix() != nullptr) {
@@ -184,8 +188,6 @@ void artificialIntelligence::classes::ConvLayer::calculateAndUpdateAllCPU () {
 }
 
 void ConvLayer::calculateAndUpdateLayerCPU () {
-
-
    Matrix3D* nextLayer = this->getNext()->getLayerMatrix();
    Matrix3D* outputs = new Matrix3D (nextLayer->getLength(), nextLayer->getWidth(), nextLayer->getHeight());
 	outputs->setAll(0);
@@ -796,10 +798,9 @@ __global__ void artificialIntelligence::classes::updateWeightsConv(float* weight
 }
 
 void ConvLayer::printDetails () {
-	std::cout << "Conv Layer :: ";
+	std::cout << "Conv Layer :: " << this->getLayerMatrixCount () << " x ";
 	this->getLayerMatrix()->printMatrixSize();
-	std::cout << "Conv Size :: " << "[" << this->convLength << "x" << this->convWidth << "x" << this->convHeight << "]\n";
-	std::cout << "Features :: " << this->features << '\n';
+	std::cout << "Conv Size :: " << this->features << " x " << "[" << this->convLength << "x" << this->convWidth << "x" << this->convHeight << "]\n";
 }  
 
 

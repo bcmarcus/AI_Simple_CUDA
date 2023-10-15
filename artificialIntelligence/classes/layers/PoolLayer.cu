@@ -21,7 +21,7 @@ using namespace artificialIntelligence::functions::activation;
 
 #define MAX_BLOCK_SIZE 8192
 
-PoolLayer::PoolLayer (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, ActivationType activationType) {
+PoolLayer::PoolLayer (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, int layerMatrixCount, ActivationType activationType) {
    // this->layerMatrixes = new Matrix3D* [1];
 	// this->layerMatrixes[0] = layerMatrix;
 
@@ -50,20 +50,8 @@ PoolLayer::PoolLayer (Matrix3D* layerMatrix, int poolLength, int poolWidth, int 
 }
 
 
-PoolLayer::PoolLayer (int length, int width, int height, int poolLength, int poolWidth, int poolHeight, ActivationType activationType) {
-	this->layerMatrixes = new Matrix3D* [1];
-	this->layerMatrixes[0] = new Matrix3D (length, width, height);
-
-	this->biasMatrixes = new Matrix3D*[1];
-   this->biasMatrixes[0] = nullptr;
-   this->weights = (WeightBase**) new PoolWeight*[1];
-   this->weights[0] = this->newWeight(0);
-   this->next = (LayerBase**) new PoolLayer*[1];
-	this->next[0] = nullptr;
-   this->prev = (LayerBase**) new PoolLayer*[1];
-	this->prev[0] = nullptr;
-
-	this->layerMatrixCount = 1;
+PoolLayer::PoolLayer (int length, int width, int height, int poolLength, int poolWidth, int poolHeight, int layerMatrixCount, ActivationType activationType) {
+	this->layerMatrixCount = 0;
 	this->biasCount = 0;
 	this->weightsCount = 1;
 	this->nextCount = 0;
@@ -75,6 +63,20 @@ PoolLayer::PoolLayer (int length, int width, int height, int poolLength, int poo
 	this->poolLength = poolLength;
 	this->poolWidth = poolWidth;
 	this->poolHeight = poolHeight;
+
+	this->layerMatrixes = new Matrix3D* [layerMatrixCount];
+	for (int i = 0; i < layerMatrixCount; i++) {
+		this->setLayerMatrix (new Matrix3D (length, width, height), i);
+	}
+
+	this->biasMatrixes = new Matrix3D*[1];
+   this->biasMatrixes[0] = nullptr;
+   this->weights = (WeightBase**) new PoolWeight*[1];
+   this->weights[0] = this->newWeight(0);
+   this->next = (LayerBase**) new PoolLayer*[1];
+	this->next[0] = nullptr;
+   this->prev = (LayerBase**) new PoolLayer*[1];
+	this->prev[0] = nullptr;
 }
 
 
@@ -172,17 +174,30 @@ PoolLayer::PoolLayer (const PoolLayer& b, bool copyNext) {
 //    return this;
 // }
 
+int PoolLayer::getPoolLength () const {
+	return this->poolLength;
+}
+
+int PoolLayer::getPoolWidth () const {
+	return this->poolWidth;
+}
+
+int PoolLayer::getPoolHeight () const {
+	return this->poolHeight;
+}
+
+
 PoolLayer* PoolLayer::getNext (int index) const {
 	return (PoolLayer*) this->LayerBase::getNext (index);
 }
 
-PoolLayer* PoolLayer::add (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, ActivationType activationType) {
+PoolLayer* PoolLayer::add (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, int layerMatrixCount, ActivationType activationType) {
    if (this->getNext() == nullptr) {
-      this->next[0] = new PoolLayer (layerMatrix, poolLength, poolWidth, poolHeight, activationType);
+      this->next[0] = new PoolLayer (layerMatrix, poolLength, poolWidth, poolHeight, layerMatrixCount, activationType);
       this->getNext()->setPrev(this);
       return this;
    }
-   this->getNext()->add(layerMatrix, poolLength, poolWidth, poolHeight, activationType);
+   this->getNext()->add(layerMatrix, poolLength, poolWidth, poolHeight, layerMatrixCount, activationType);
    return this;
 }
 
@@ -704,7 +719,7 @@ void PoolLayer::updateWeightsGPU (Matrix3D* delta, double learningRate) {
 }
 
 void PoolLayer::printDetails () {
-	std::cout << "Max Pool Layer :: ";
+	std::cout << "Max Pool Layer :: " << this->layerMatrixCount << " x ";
 	this->getLayerMatrix()->printMatrixSize();
 	std::cout << "Pool Size :: [" << this->poolLength << "x" << this->poolWidth << "x" << this->poolHeight << "]" << '\n';
 }    

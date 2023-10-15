@@ -38,7 +38,7 @@ namespace artificialIntelligence {
 				ConvLayer ();
 
 				// generate layer constructor
-            ConvLayer (int length, int width, int height, int convLength = 1, int convWidth = 3, int convHeight = 3, int features = 1, int stride = 1, ActivationType activationType = ActivationType::Sigmoid);
+            ConvLayer (int length, int width, int height, int convLength = 1, int convWidth = 3, int convHeight = 3, int features = 1, int stride = 1, int layerMatrixCount = 1, ActivationType activationType = ActivationType::Sigmoid);
 
             // generate layer constructor
             ConvLayer (Matrix3D* layerMatrix, int convLength, int convWidth, int convHeight, ActivationType activationType);
@@ -54,6 +54,8 @@ namespace artificialIntelligence {
 
             
             // -- GET METHODS -- //
+
+            int getFeatureCount () const;
 
             // gets the next layer in the model
             // ConvLayer* getNext () const;

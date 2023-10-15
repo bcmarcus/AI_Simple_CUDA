@@ -29,10 +29,10 @@ namespace artificialIntelligence {
             // -- CONSTRUCTOR DESTRUCTOR COPY -- //
             
             // default coonstructor
-				PoolLayer (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, ActivationType activationType);
+				PoolLayer (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, int layerMatrixCount, ActivationType activationType);
 
 				// generate layer constructor
-            PoolLayer (int length, int width, int height, int poolLength, int poolWidth, int poolHeight, ActivationType activationType = ActivationType::Sigmoid);
+            PoolLayer (int length, int width, int height, int poolLength, int poolWidth, int poolHeight, int layerMatrixCount = 1, ActivationType activationType = ActivationType::Sigmoid);
 
 				// initialize with values constructor
             PoolLayer ();
@@ -45,6 +45,12 @@ namespace artificialIntelligence {
 
             
             // -- GET METHODS -- //
+
+            int getPoolLength () const;
+
+            int getPoolWidth () const;
+
+            int getPoolHeight () const;
 
             // gets the next layer in the model
             PoolLayer* getNext (int index = 0) const;
@@ -76,7 +82,7 @@ namespace artificialIntelligence {
             // PoolLayer* add (LayerBase* layer);
 
             // creates and adds a layer at the end of the model recursively
-            PoolLayer* add (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, ActivationType activationType);
+            PoolLayer* add (Matrix3D* layerMatrix, int poolLength, int poolWidth, int poolHeight, int layerMatrixCount, ActivationType activationType);
 
             // creates a new weight based on the two given layers
 				WeightBase* newWeight (int index);

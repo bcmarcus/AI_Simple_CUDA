@@ -19,12 +19,10 @@ void test01() {
 	int l = 1;
 	int w = 2;
 	int h = 2;
-	Matrix3D* root = new Matrix3D(l, w, h);
-	root->setAll(1);
 	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewConv(l, w, h, 1, 1, 1, 2);
+	model->addNewConvRoot(l, w, h, 1, 2, 2);
+	model->addNewConv(1, 2, 2);
+	model->addNewConv(1, 1, 1, 2);
 	model->print(true);
 }
 
@@ -32,12 +30,10 @@ void test02() {
 	int l = 1;
 	int w = 2;
 	int h = 2;
-	Matrix3D* root = new Matrix3D(l, w, h);
-	root->setAll(1);
 	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewConv(l, w, h, 1, 2, 2, 2);
-	model->addNewConv(l, w, h, 1, 3, 3, 4);
+	model->addNewConvRoot(l, w, h, 1, 2, 2);
+	model->addNewConv(1, 2, 2, 2);
+	model->addNewConv(1, 3, 3, 4);
 	model->print(true, true);
 }
 
@@ -45,16 +41,11 @@ void test03() {
 	int l = 2;
 	int w = 4;
 	int h = 4;
-	Matrix3D* root = new Matrix3D(l, w, h);
-	root->setAll(1);
 	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewConv(l, w, h, 1, 2, 2, 2, 1);
-	model->addNewConv(l, w, h, 1, 2, 2, 3, 1);
-	int l2 = l;
-	int w2 = w / 2;
-	int h2 = h / 2;
-	model->addNewConv(l2, w2, h2, 1, 4, 3, 4, 2);
+	model->addNewConvRoot(l, w, h, 1, 2, 2);
+	model->addNewConv(1, 2, 2, 2, 1);
+	model->addNewConv(1, 2, 2, 3, 1);
+	model->addNewConv(1, 4, 3, 4, 2);
 	model->print(true, true, true);
 }
 
@@ -63,22 +54,17 @@ void test04() {
 	int w = 4;
 	int h = 4;
 	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewConv(l, w, h, 1, 2, 2, 2, 1);
-	model->addNewConv(l, w, h, 1, 2, 2, 3, 1);
+	model->addNewConvRoot(l, w, h, 1, 2, 2);
+	model->addNewConv(1, 2, 2, 2);
+	model->addNewConv(1, 2, 2, 3);
+	model->addNewPool(1, 2, 2);
+	model->addNewConv(1, 2, 2, 3);
 	model->addNewPool(1,2,2);
-	int l2 = l;
-	int w2 = w / 2;
-	int h2 = h / 2;
-	model->addNewConv(l2, w2, h2, 1, 2, 2, 3, 1);
-	model->addNewPool(1,2,2);
-	int l3 = l2;
-	int w3 = w2 / 2;
-	int h3 = h2 / 2;
-	model->addNewBasic(l3, w3, h3);
+
+	model->addNewBasic();
 	model->addNewBasic(1,1,8);
 	model->addNewBasic(1,1,8);
-	model->print(true, true, 1);
+	model->print(0,0,0);
 }
 
 void test05() {
@@ -86,20 +72,14 @@ void test05() {
 	int w = 28;
 	int h = 28;
 	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewConv(l, w, h, 1, 2, 2, 2, 1);
-	model->addNewConv(l, w, h, 1, 2, 2, 3, 1);
+	model->addNewConvRoot(l, w, h, 1, 2, 2);
+	model->addNewConv(1, 2, 2, 2, 1);
+	model->addNewConv(1, 2, 2, 3, 1);
 	model->addNewPool(1,2,2);
-	int l2 = l;
-	int w2 = w / 2;
-	int h2 = h / 2;
-	model->addNewConv(l2, w2, h2, 1, 2, 2, 3, 1);
+	model->addNewConv(1, 2, 2, 3, 1);
 	model->addNewPool(1,2,2);
-	int l3 = l2;
-	int w3 = w2 / 2;
-	int h3 = h2 / 2;
-	model->addNewBasic(l3, w3, h3);
-	model->addNewBasic(1,1,10);
+	model->addNewBasic();
+	model->addNewBasic(1,20,20);
 	model->addNewBasic(1,1,10);
 	model->print(0, 0, 0);
 }
@@ -109,19 +89,33 @@ void test06() {
 	int w = 128;
 	int h = 128;
 	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewConv(l, w, h, 1, 2, 2, 2, 1);
-	model->addNewConv(l, w, h, 1, 2, 2, 3, 1);
+	model->addNewConvRoot(l, w, h, 1, 3, 3, 64);
+	model->addNewConv(1, 3, 3, 32, 1);
+	model->addNewConv(1, 3, 3, 16, 1);
+	model->addNewPool(1,4,4);
+	model->addNewConv(1, 2, 2, 16, 1);
 	model->addNewPool(1,2,2);
-	int l2 = l;
-	int w2 = w / 2;
-	int h2 = h / 2;
-	model->addNewConv(l2, w2, h2, 1, 2, 2, 3, 1);
+	model->addNewBasic();
+	model->addNewBasic(1,1,150);
+	model->addNewBasic(1,1,150);
+	model->print(0, 0, 0);
+}
+
+void test07() {
+	int l = 3;
+	int w = 128;
+	int h = 128;
+	LayerList* model = new LayerList();
+	model->addNewConvRoot(l, w, h, 1, 32, 32, 64);
+	model->print();
+	model->addNewConv(1, 32, 32, 32, 1);
+	model->print();
+	model->addNewConv(1, 32, 32, 16, 1);
+	model->print();
 	model->addNewPool(1,2,2);
-	int l3 = l2;
-	int w3 = w2 / 2;
-	int h3 = h2 / 2;
-	model->addNewBasic(l3, w3, h3);
+	model->addNewConv(1, 16, 16, 16, 1);
+	model->addNewPool(1,4,4);
+	model->addNewBasic();
 	model->addNewBasic(1,1,150);
 	model->addNewBasic(1,1,150);
 	model->print(0, 0, 0);
@@ -132,140 +126,8 @@ void test1() {
 	int w = 4;
 	int h = 4;
 	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
+	model->addNewConvRoot(l, w, h, 1, 2, 2);
 	model->addNewBasic(l, w, h);
-	model->print(0, 0, 0);
-	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
-
-	model->getRoot()->getWeights()->setAll(1);
-
-	std::cout << "\n:::STARTING CPU TESTS:::";
-	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllCPU();
-	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-
-	std::cout << "\n:::STARTING GPU TESTS:::";
-	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllGPUV2();
-	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-	
-
-	std::cout << "\n::::RESULTS::::\n";
-	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
-	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	delete model;
-}
-
-void test2() {
-	int l = 1;
-	int w = 4;
-	int h = 4;
-	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2, 2, 2);
-	model->addNewBasic(l, w, h);
-	model->addNewBasic(l, w, h);
-	model->print(0, 0, 0);
-	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
-
-	model->getRoot()->getWeights()->setAll(1);
-
-	std::cout << "\n:::STARTING CPU TESTS:::";
-	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllCPU();
-	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-
-	std::cout << "\n:::STARTING GPU TESTS:::";
-	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllGPUV2();
-	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-	
-
-	std::cout << "\n::::RESULTS::::\n";
-	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
-	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	delete model;
-}
-
-void test3() {
-	int l = 1;
-	int w = 4;
-	int h = 4;
-	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewPool(1, 2, 2);
-	model->addNewBasic(1, 2, 2);
-	model->print(0, 0, 0);
-	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
-
-	model->getRoot()->getWeights()->setAll(1);
-
-	std::cout << "\n:::STARTING CPU TESTS:::";
-	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllCPU();
-	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-
-	std::cout << "\n:::STARTING GPU TESTS:::";
-	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllGPUV2();
-	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-	
-
-	std::cout << "\n::::RESULTS::::\n";
-	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
-	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	delete model;
-}
-
-void test4() {
-	int l = 1;
-	int w = 4;
-	int h = 4;
-	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewPool(1, 2, 2);
-	model->addNewConv(1, 2, 2, 1, 2, 2);
-	model->addNewPool(1, 2, 2);
-	model->addNewBasic(1, 1, 1);
-	model->print(0, 0, 0);
-	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
-
-	model->getRoot()->getWeights()->setAll(1);
-
-	std::cout << "\n:::STARTING CPU TESTS:::";
-	double cpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllCPU();
-	double cpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - cpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-
-	std::cout << "\n:::STARTING GPU TESTS:::";
-	double gpuStartTime = GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000;
-	model->calculateAndUpdateAllGPUV2();
-	double gpuFinalTime = (GetTimeStamp().tv_sec + (double) GetTimeStamp().tv_usec / 1000000) - gpuStartTime;
-	model->getLast()->getLayerMatrix()->printMatrix();
-	
-
-	std::cout << "\n::::RESULTS::::\n";
-	std::cout << "CPU TIME TO COMPLETE: " << cpuFinalTime << '\n';
-	std::cout << "GPU TIME TO COMPLETE: " << gpuFinalTime << '\n';
-	delete model;
-}
-
-void test5() {
-	int l = 4;
-	int w = 4;
-	int h = 4;
-	LayerList* model = new LayerList();
-	model->addNewConv(l, w, h, 1, 2, 2);
-	model->addNewPool(1, 2, 2);
-	model->addNewConv(2, w, h, 1, 2, 2);
-	model->addNewPool(1, 2, 2);
-	model->addNewBasic(1, 1, 1);
 	model->print(0, 0, 0);
 	model->getRoot()->getNext()->getLayerMatrix()->setAll(1);
 
@@ -291,9 +153,9 @@ void test5() {
 }
 
 int main (){
-	std::cout << "Starting test 01\n";
-	test01();
-	std::cout << "\n\n";
+	// std::cout << "Starting test 01\n";
+	// test01();
+	// std::cout << "\n\n";
 	// std::cout << "Starting test 02\n";
 	// test02();
 	// std::cout << "\n\n";
@@ -309,6 +171,9 @@ int main (){
 	// std::cout << "Starting test 06\n";
 	// test06();
 	// std::cout << "\n\n";
+	std::cout << "Starting test 07\n";
+	test07();
+	std::cout << "\n\n";
 
 	// std::cout << "\n\n\n\n\n";
 	// std::cout << "Starting test 1\n";

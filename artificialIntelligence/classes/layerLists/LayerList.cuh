@@ -53,21 +53,25 @@ namespace artificialIntelligence {
             // -- GENERATE METHODS -- //
 
             // adds a layer at the end of the model recursively 
-            void add (LayerBase* layer, int index = 0);
+            // void add (LayerBase* layer, int index = 0);
 
             // creates and adds a layer at the end of the model recursively
             void add (Matrix3D* layer, Matrix3D* biasMatrix, WeightBase* weights);
 
             // creates and adds a new basic layer
+            void addNewBasic (ActivationType activationType = ActivationType::Sigmoid, int index = 0);
+
+            // creates and adds a new basic layer to the root
             void addNewBasic (int length, int width, int height, ActivationType activationType = ActivationType::Sigmoid, int index = 0);
 
             // creates and adds a new pooling layer
             void addNewPool (int poolLength = 1, int poolWidth = 2, int poolHeight = 2, ActivationType activationType = ActivationType::Sigmoid, int index = 0);
 
-            // creates and adds a layer at the end of the model recursively
-            void addNewConv (int length, int width, int height, int convLength = 1, int convWidth = 3, int convHeight = 3, int features = 1, int stride = 1, ActivationType activationType = ActivationType::Sigmoid, int index = 0);
+            // creates and adds a new convolution layer
+            void addNewConv (int convLength = 1, int convWidth = 3, int convHeight = 3, int features = 1, int stride = 1, ActivationType activationType = ActivationType::Sigmoid, int index = 0);
             
-
+            // creates and adds a new convolution layer to the root
+            void addNewConvRoot (int length, int width, int height, int convLength = 1, int convWidth = 3, int convHeight = 3, int features = 1, int stride = 1, ActivationType activationType = ActivationType::Sigmoid, int index = 0);
             // -- LAYER UPDATE METHODS -- //
             
             // updates all layers in the model using CPU compute
@@ -83,7 +87,7 @@ namespace artificialIntelligence {
             // -- PRINT METHODS -- //
             
             // prints the entire model
-            void print (bool printLayer = false, bool printBias = false, bool printWeights = false);
+            void print (int printLayer = 0, int printBias = 0, int printWeights = 0);
 
 
             // -- LOAD FILE METHODS -- //

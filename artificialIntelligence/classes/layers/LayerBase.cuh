@@ -277,7 +277,7 @@ namespace artificialIntelligence {
             virtual void printDetails () = 0;
 
             // prints the layer and all layers below it
-            void print (bool printLayer = false, bool printBias = false, bool printWeights = false, int index = 0, int depth = 1) {
+            void print (int printLayer = 0, int printBias = 0, int printWeights = 0, int index = 0, int depth = 1) {
                if (this->layerMatrixes != nullptr) {
                   std::cout << "\n\nDepth::Across " << depth << "::" << index << '\n';
                   this->printDetails();
@@ -299,7 +299,7 @@ namespace artificialIntelligence {
                            break;
                      }
                      std::cout << "Activation: " << a << '\n';
-                     std::cout << "Parameter Count: " << paramCount() << '\n';
+                     std::cout << "Parameter Count: " << paramCount() << "\n";
                   } else {
                      std::cout << "Activation: None" << '\n';
                      std::cout << "No Parameters.\n";
@@ -309,35 +309,45 @@ namespace artificialIntelligence {
                   return;
                }
 
-               if (printLayer) {
-                  if (this->layerMatrixCount != 0) {
-                     std::cout << "Layer Matrixes: \n";
-                     for (int i = 0; i < this->layerMatrixCount; i++) {
+               if (this->layerMatrixCount != 0) {
+                  std::cout << "Layer Matrixes: \n";
+                  for (int i = 0; i < this->layerMatrixCount; i++) {
+                     if (printLayer >= 1) {
+                        this->getLayerMatrix(i)->printMatrixSize();
+                     }
+                     if (printLayer >= 2) {
                         this->getLayerMatrix(i)->printMatrix();
                      }
                   }
                }
 
-               if (printBias) {
-                  if (this->biasCount != 0) {
-                     std::cout << "Bias Matrixes: \n";
-                     for (int i = 0; i < this->biasCount; i++) {
+               if (this->biasCount != 0) {
+                  std::cout << "Bias Matrixes: \n";
+                  for (int i = 0; i < this->biasCount; i++) {
+                     this->getBias(i)->printMatrixSize();
+                     if (printBias >= 1) {
+                        this->getBias(i)->printMatrixSize();
+                     }
+                     if (printBias >= 2) {
                         this->getBias(i)->printMatrix();
                      }
-                  } else {
-                     std::cout << "No biases found!\n";
                   }
+               } else {
+                  std::cout << "No biases found!\n";
                }
 
-               if (printWeights) {
-                  if (this->weightsCount != 0) {
-                     std::cout << "Weight Matrixes: \n";
-                     for (int i = 0; i < this->weightsCount; i++) {
+               if (this->weightsCount != 0) {
+                  std::cout << "Weight Matrixes: \n";
+                  for (int i = 0; i < this->weightsCount; i++) {
+                     if (printWeights >= 1) {
+                        // this->getWeights(i)->printMatrixSize();
+                     }
+                     if (printWeights >= 2) {
                         this->getWeights(i)->print();
                      }
-                  } else {
-                     std::cout << "No weights found!\n";
                   }
+               } else {
+                  std::cout << "No weights found!\n";
                }
 
                for (int i = 0; i < this->nextCount; i++) {

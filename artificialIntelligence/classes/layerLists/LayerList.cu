@@ -81,13 +81,42 @@ void LayerList::copyRootMatrix (Matrix3D* newMatrix) {
 // -- GENERATE METHODS -- //
 
 // adds a layer at the end of the model recursively 
-void LayerList::add (LayerBase* layer, int index) {
-   if (this->last != nullptr) {
-      this->last = this->last->add (layer, index);
-   } else {
-      this->root = layer;
-      this->last = this->root;
+// void LayerList::add (LayerBase* layer, int index) {
+//    if (this->last != nullptr) {
+//       this->last = this->last->add (layer, index);
+//    } else {
+//       this->root = layer;
+//       this->last = this->root;
+//    }
+// }
+
+void LayerList::addNewBasic (ActivationType activationType, int index) {
+   if (this->root == nullptr) {
+      std::cout << "Use the AddNewBasicRoot function if root hasn't been initialized\n";
+      exit(1);
    }
+
+   int length, width, height;
+   switch (this->last->getLayerType()) {
+      case LayerBase::LayerType::Conv:
+         length = this->last->getLayerMatrix()->getLength() * this->last->getLayerMatrixCount() * ((ConvLayer*) this->last)->getFeatureCount();
+         width = this->last->getLayerMatrix()->getWidth();
+         height = this->last->getLayerMatrix()->getHeight();
+         break;
+      case LayerBase::LayerType::Pool:
+         length = this->last->getLayerMatrix()->getLength() * this->last->getLayerMatrixCount() / ((PoolLayer*) this->last)->getPoolLength();
+         width = this->last->getLayerMatrix()->getWidth() / ((PoolLayer*) this->last)->getPoolWidth();
+         height = this->last->getLayerMatrix()->getHeight() / ((PoolLayer*) this->last)->getPoolHeight();
+         break;
+      default:
+         length = this->last->getLayerMatrix()->getLength();
+         width = this->last->getLayerMatrix()->getWidth();
+         height = this->last->getLayerMatrix()->getHeight();
+         break;
+   }
+   BasicLayer* next = new BasicLayer (length, width, height, activationType);
+   this->root->add (next, index);
+   this->last = this->root->getLast();
 }
 
 void LayerList::addNewBasic (int length, int width, int height, ActivationType activationType, int index) {
@@ -95,10 +124,19 @@ void LayerList::addNewBasic (int length, int width, int height, ActivationType a
    if (this->root == nullptr) {
       this->root = next;
       this->last = next;
-   } else {
-      this->root->add (next, index);
-      this->last = this->root->getLast();
    }
+   switch (this->last->getLayerType()) {
+      case LayerBase::LayerType::Conv:
+         std::cout << "Basic with size after conv layer\n";
+         exit (1);
+      case LayerBase::LayerType::Pool:
+         std::cout << "Basic with size after pool layer\n";
+         exit (1);
+      default:
+         break;
+   }
+   this->root->add (next, index);
+   this->last = this->root->getLast();
 }
 
 // creates and adds a layer at the end of the model recursively
@@ -106,32 +144,88 @@ void LayerList::addNewPool (int poolLength, int poolWidth, int poolHeight, Activ
    if (this->root == nullptr) {
       std::cout << "Pooling layer cannot be first layer\n";
       exit (1);
-   } else {
-      PoolLayer* next = new PoolLayer 
-      (
-         this->root->getLast()->getLayerMatrix()->getLength(), 
-         this->root->getLast()->getLayerMatrix()->getWidth(), 
-         this->root->getLast()->getLayerMatrix()->getHeight(), 
-         poolLength,
-         poolWidth, 
-         poolHeight,
-         activationType
-      );
-      this->root->add (next, index);
-      this->last = this->root->getLast();
    }
+   int nextLayerCount, length, width, height;
+   switch (this->last->getLayerType()) {
+      case LayerBase::LayerType::Conv:
+         nextLayerCount = this->last->getLayerMatrixCount() * ((ConvLayer*) this->last)->getFeatureCount();
+         length = this->last->getLayerMatrix()->getLength();
+         width = this->last->getLayerMatrix()->getWidth();
+         height = this->last->getLayerMatrix()->getHeight();
+         break;
+      case LayerBase::LayerType::Pool:
+         nextLayerCount = this->last->getLayerMatrixCount();
+         length /= ((PoolLayer*) this->last)->getPoolLength();
+         width /= ((PoolLayer*) this->last)->getPoolWidth();
+         height /= ((PoolLayer*) this->last)->getPoolHeight();
+         break;
+      default:
+         nextLayerCount = 1;
+         length = this->last->getLayerMatrix()->getLength();
+         width = this->last->getLayerMatrix()->getWidth();
+         height = this->last->getLayerMatrix()->getHeight();
+         break;
+   }
+   
+   PoolLayer* next = new PoolLayer 
+   (
+      length, 
+      width, 
+      height, 
+      poolLength,
+      poolWidth, 
+      poolHeight,
+      nextLayerCount,
+      activationType
+   );
+
+   this->root->add (next, index);
+   this->last = this->root->getLast();
 }
 
 // creates and adds a layer at the end of the model recursively
-void LayerList::addNewConv (int length, int width, int height, int convLength, int convWidth, int convHeight, int features, int stride, ActivationType activationType, int index) {
-   ConvLayer* next = new ConvLayer (length, width, height, convLength, convWidth, convHeight, features, stride, activationType);
+void LayerList::addNewConv (int convLength, int convWidth, int convHeight, int features, int stride, ActivationType activationType, int index) {
    if (this->root == nullptr) {
-      this->root = next;
-      this->last = next;
-   } else {
-      this->root->add (next, index);
-      this->last = this->root->getLast();
+      std::cout << "Use the AddNewConvRoot function if root hasn't been initialized\n";
+      exit(1);
+   } 
+   
+   int nextLayerCount, length, width, height;
+   switch (this->last->getLayerType()) {
+      case LayerBase::LayerType::Conv:
+         nextLayerCount = this->last->getLayerMatrixCount() * ((ConvLayer*) this->last)->getFeatureCount();
+         length = this->last->getLayerMatrix()->getLength();
+         width = this->last->getLayerMatrix()->getWidth();
+         height = this->last->getLayerMatrix()->getHeight();
+         break;
+      case LayerBase::LayerType::Pool:
+         nextLayerCount = this->last->getLayerMatrixCount();
+         length = this->last->getLayerMatrix()->getLength() / ((PoolLayer*) this->last)->getPoolLength();
+         width = this->last->getLayerMatrix()->getWidth() / ((PoolLayer*) this->last)->getPoolWidth();
+         height = this->last->getLayerMatrix()->getHeight() / ((PoolLayer*) this->last)->getPoolHeight();
+         break;
+      default:
+         nextLayerCount = 1;
+         length = this->last->getLayerMatrix()->getLength();
+         width = this->last->getLayerMatrix()->getWidth();
+         height = this->last->getLayerMatrix()->getHeight();
+         break;
    }
+
+   ConvLayer* next = new ConvLayer (length, width, height, convLength, convWidth, convHeight, features, stride, nextLayerCount, activationType);
+   this->root->add (next, index);
+   this->last = this->root->getLast();
+}
+
+void LayerList::addNewConvRoot (int length, int width, int height, int convLength, int convWidth, int convHeight, int features, int stride, ActivationType activationType, int index) {
+   if (this->root != nullptr) {
+      std::cout << "Use the AddNewConv function if root hasn't been initialized\n";
+      exit(1);
+   }
+
+   ConvLayer* next = new ConvLayer (length, width, height, convLength, convWidth, convHeight, features, stride, 1, activationType);
+   this->root = next;
+   this->last = next;
 }
 
 
@@ -168,7 +262,7 @@ void LayerList::calculateAndUpdateAllGPUV2 () {
 // -- PRINT METHODS -- //
 
 // prints the entire model
-void LayerList::print (bool printLayer, bool printBias, bool printWeights) {
+void LayerList::print (int printLayer, int printBias, int printWeights) {
    if (this->root != nullptr) {
       this->root->print(printLayer, printBias, printWeights);
       std::cout << "\n\nThere are " << this->totalParamCount << " total parameters\n";
