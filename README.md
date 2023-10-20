@@ -16,11 +16,13 @@ AI_SIMPLE_CUDA is designed to provide a simple, yet powerful, interface for deve
 
 ## Installation
 
+Follow these commands below to properly set up for ubuntu. Be sure to download the proper cuda version for ubuntu
+
+More version can be found here:
 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/
 
-{
-
-// ubuntu20.04 
+### ubuntu20.04 
+```
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
 
 sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
@@ -28,8 +30,10 @@ sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
 sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
 
 sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+```
 
-// ubuntu22.04
+### ubuntu22.04
+```
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
 
 sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
@@ -37,14 +41,17 @@ sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
 sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
 
 sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
+```
 
-}
-
+Follow these steps for all versions
+```
 sudo apt-get update
 
 sudo apt-get -y install cuda
+```
 
-
+### Installing ImageMagick
+```
 https://techpiezo.com/linux/install-imagemagick-in-ubuntu-20-04-lts/
 
 ImageMagick
@@ -64,17 +71,18 @@ make
 sudo make install
 sudo ldconfig /usr/local/lib
 make check
+```
 
 cd ..
 
-git clone git@github.com:Tacosaurus100/coreutils.git
 
-cd AI_Simple_CUDA
+// Not necessary anymore because submodules: `git clone git@github.com:Tacosaurus100/coreutils.git`
 
-ln -s ../coreutils/ ./
+// Not necessary anymore because submodules: cd AI_Simple_CUDA
 
+// Not necessary anymore because submodules: ln -s ../coreutils/ ./
 
-// these are the docs
+// more docs for installing cuda
 https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html#linux
 
 // this is how to get your dpkg stuff
