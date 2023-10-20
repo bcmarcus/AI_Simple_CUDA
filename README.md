@@ -1,3 +1,20 @@
+# AI_SIMPLE_CUDA
+
+AI_SIMPLE_CUDA is a neural network framework written in C++, designed to leverage both CPU and GPU compute capabilities. The framework currently supports Multi-Layer Perceptrons (MLPs) and includes preliminary, non-functional code for Convolutional Neural Networks (ConvNets). The primary goal of AI_SIMPLE_CUDA is to provide a testing ground for comparing its performance and accuracy against other common neural network frameworks.
+
+## Description
+
+AI_SIMPLE_CUDA is designed to provide a simple, yet powerful, interface for developing and training neural networks in C++. The framework is built with a focus on flexibility and ease of use, with a clean and simple API that makes it easy to create complex neural network architectures. It is designed to take full advantage of both CPU and GPU compute capabilities, and is currently compatible with Ubuntu.
+
+## Features
+
+- **Multi-Layer Perceptrons (MLPs)**: Build and train MLPs with ease, using a simple and intuitive API.
+- **Convolutional Neural Networks (ConvNets)**: Preliminary, non-functional code for ConvNets is included. This feature is currently under development.
+- **Tensor Implementation**: The framework uses a custom Tensor implementation, which is essentially a 3-dimensional array. Currently, the number of dimensions is fixed at 3.
+- **GPU Preloading**: To maximize speed, data is preloaded into the GPU. This allows for faster processing and better utilization of the GPU's capabilities.
+- **Parallelization**: The framework is designed to parallelize tasks as much as possible, further enhancing performance.
+
+## Installation
 
 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/
 
@@ -74,3 +91,7 @@ sudo apt-get -y install cuda
 sudo reboot
 export PATH=/usr/local/cuda-11.8/bin${PATH:+:${PATH}}
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64\${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+## Usage
+
+See testing folder for examples of each part.
